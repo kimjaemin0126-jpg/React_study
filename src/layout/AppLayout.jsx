@@ -4,6 +4,7 @@ import Header from './Header'
 import Sidebar from './Sidebar'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import TemplateSelector from '../common/TemplateSelector'
+import CalendarSidebar from './calender'
 
 export default function AppLayout() {
   const [templateOpen, setTemplateOpen] = useState(false)
@@ -30,7 +31,13 @@ export default function AppLayout() {
       <div className="main-column">
         <Header onOpenSidebar={() => setMobileSidebarOpen(true)} />
         {storageError && <div className="storage-alert" role="alert">{storageError}</div>}
-        <main className="main-content"><Outlet /></main>
+        <div className="content-with-calendar">
+          <main className="main-content">
+            <Outlet />
+          </main>
+
+          <CalendarSidebar />
+        </div>
       </div>
       {templateOpen && (
         <TemplateSelector
