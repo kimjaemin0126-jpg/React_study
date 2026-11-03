@@ -130,3 +130,20 @@
     max-height: 60vh;
   }
 }
+
+.study-danger-section {
+  border-top: 1px solid #e5e5e5;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.study-danger {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  background: #c43b46;
+  color: #fff;
+}

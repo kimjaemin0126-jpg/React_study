@@ -1,12 +1,19 @@
-import { useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ChevronRight, Copy, Download, FilePlus2, FileText, MoreHorizontal, Star, Trash2, UserPlus, Users } from 'lucide-react'
 import DocumentEditor from '../editor/DocumentEditor'
+import { createBlock } from '../editor/blockTypes'
 import MembersPanel from '../components/MembersPanel'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import { studyApi } from '../services/studyApi'
 import { formatRelativeDate, getDocumentTitle, hasParentCycle } from '../utils/documentUtils'
 import { exportDocumentToPdf } from '../utils/exportPdf'
+
+// 스터디 접근을 잃었을 때 이유를 알려주는 안내 창 (401/403: 강퇴, 410: 스터디 닫힘)
+function denyAccess(err) {
+  if (err.status === 410) window.alert('스터디가 닫혀서 문서를 열 수 없어요.')
+  else if (err.status === 401 || err.status === 403) window.alert('이 스터디에서 나가게 되어 문서를 열 수 없어요.')
+}
 
 export default function DocumentPage() {
   const { documentId } = useParams()
@@ -27,7 +34,72 @@ export default function DocumentPage() {
     return path
   }, [activeDocuments, current])
 
+  const workspaceId = current?.workspaceId ?? null
+  const [access, setAccess] = useState(null) // { workspaceId, status: 'ok' | 'denied', myRole, message }
+  const [syncError, setSyncError] = useState('')
+  const accessReady = workspaceId !== null && access?.workspaceId === workspaceId && access.status === 'ok'
+  const canEdit = accessReady && ['OWNER', 'EDITOR'].includes(access.myRole)
+  const inert = workspaceId !== null && !canEdit
+  const title = current?.title
+  const blocks = current?.blocks
+
+  // 스터디 문서는 서버 내용을 기준으로 불러옴 (강퇴, 권한 변경이 바로 반영되도록)
+  useEffect(() => {
+    if (!workspaceId) return
+    let ignore = false
+    studyApi.getDocument(workspaceId)
+      .then((remote) => {
+        if (ignore) return
+        updateDocument(documentId, {
+          title: remote.title,
+          blocks: remote.blocks.length ? remote.blocks : [createBlock()]
+        })
+        setAccess({ workspaceId, status: 'ok', myRole: remote.myRole })
+      })
+      .catch((err) => {
+        if (ignore) return
+        denyAccess(err)
+        setAccess({ workspaceId, status: 'denied', message: err.message })
+      })
+    return () => { ignore = true }
+  }, [workspaceId, documentId, updateDocument])
+
+  // 문서를 열어둔 채로도 강퇴, 스터디 닫기가 바로 반영되도록 주기적으로 권한을 확인
+  // (내용은 다시 불러오지 않아서 입력 중인 글이 지워지지 않음)
+  useEffect(() => {
+    if (!workspaceId) return
+    let ignore = false
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return
+      studyApi.getStudy(workspaceId).catch((err) => {
+        if (ignore) return
+        denyAccess(err)
+        setAccess({ workspaceId, status: 'denied', message: err.message })
+      })
+    }, 5000)
+    return () => {
+      ignore = true
+      window.clearInterval(timer)
+    }
+  }, [workspaceId])
+
+  // 편집 내용을 서버에 저장 (입력이 0.8초 멈추면 저장, 보기 권한은 저장하지 않음)
+  useEffect(() => {
+    if (!workspaceId || !canEdit || !blocks) return
+    const timer = window.setTimeout(() => {
+      studyApi.saveDocument(workspaceId, { title, blocks })
+        .then(() => setSyncError(''))
+        .catch((err) => setSyncError(err.message))
+    }, 800)
+    return () => window.clearTimeout(timer)
+  }, [workspaceId, canEdit, title, blocks])
+
   if (!current) return <div className="document-missing"><FileText size={24} /><h2>문서를 찾을 수 없습니다</h2><p>문서가 삭제되었거나 더 이상 존재하지 않습니다.</p><Link to="/">모든 문서 보기</Link></div>
+
+  // 스터디 접근이 거부되면 내 작업 화면(홈)으로 보냄
+  if (access?.workspaceId === workspaceId && access.status === 'denied') {
+    return <Navigate to="/" replace />
+  }
 
   const children = activeDocuments.filter((document) => document.parentId === current.id)
   const possibleParents = activeDocuments.filter((document) => document.id !== current.id && !hasParentCycle(activeDocuments, current.id, document.id))
@@ -90,9 +162,13 @@ export default function DocumentPage() {
         </div>
       </div>
       <div className="document-meta"><FileText size={15} /><span>마지막 수정 {formatRelativeDate(current.updatedAt)}</span></div>
-      <input className="document-title-input" value={current.title} placeholder="제목 없음" onChange={(event) => changeTitle(event.target.value)} aria-label="문서 제목" />
-      <div className="document-subtitle">{current.title.trim() ? '나만의 생각과 지식을 정리해 보세요.' : '제목 없음'}</div>
-      <DocumentEditor blocks={current.blocks} onChange={(blocks) => updateDocument(current.id, { blocks })} />
+      {access?.myRole === 'VIEWER' && <p className="study-warning">보기 전용 문서예요. 편집은 방장이나 편집자만 할 수 있어요.</p>}
+      {syncError && <p className="study-error" role="alert">서버에 저장하지 못했어요: {syncError}</p>}
+      <div inert={inert}>
+        <input className="document-title-input" value={current.title} placeholder="제목 없음" onChange={(event) => changeTitle(event.target.value)} aria-label="문서 제목" />
+        <div className="document-subtitle">{current.title.trim() ? '나만의 생각과 지식을 정리해 보세요.' : '제목 없음'}</div>
+        <DocumentEditor blocks={current.blocks} onChange={(blocks) => updateDocument(current.id, { blocks })} />
+      </div>
       <section className="child-pages">
         <div className="child-pages-heading"><h2>하위 페이지</h2><button type="button" className="text-action" onClick={() => {
           const childId = createDocument('blank', current.id)
@@ -101,7 +177,11 @@ export default function DocumentPage() {
         {children.length ? children.map((child) => <Link to={`/documents/${child.id}`} key={child.id} className="child-page-link"><FileText size={16} /><span>{getDocumentTitle(child)}</span><ChevronRight size={16} /></Link>) : <p className="child-empty">이 페이지에 연결된 하위 페이지가 없습니다.</p>}
       </section>
       {showMembers && current.workspaceId && (
-        <MembersPanel workspaceId={current.workspaceId} onClose={() => setShowMembers(false)} />
+        <MembersPanel
+          workspaceId={current.workspaceId}
+          onClose={() => setShowMembers(false)}
+          onClosed={() => setAccess({ workspaceId, status: 'denied', message: '스터디를 닫았어요.' })}
+        />
       )}
     </article>
   )

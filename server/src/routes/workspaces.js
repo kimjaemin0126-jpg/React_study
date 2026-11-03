@@ -151,6 +151,20 @@ workspacesRouter.delete(
   },
 )
 
+// POST /api/workspaces/:workspaceId/close : 스터디 닫기 (방장만)
+// 남은 초대 링크를 모두 취소하고, 이후 누구도 접근할 수 없게 함 (데이터는 보관)
+workspacesRouter.post('/:workspaceId/close', requireMember, requireOwner, async (req, res) => {
+  const { workspaceId } = req.params
+  const now = new Date()
+
+  await prisma.$transaction([
+    prisma.workspace.update({ where: { id: workspaceId }, data: { closedAt: now } }),
+    prisma.invite.updateMany({ where: { workspaceId, revokedAt: null }, data: { revokedAt: now } }),
+  ])
+
+  res.json({ closed: { id: workspaceId, closedAt: now } })
+})
+
 // GET /api/workspaces/:workspaceId/invites : 초대 링크 목록 (방장만, 원문 코드는 제외)
 workspacesRouter.get('/:workspaceId/invites', requireMember, requireOwner, async (req, res) => {
   const invites = await prisma.invite.findMany({

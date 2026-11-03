@@ -21,6 +21,12 @@ export async function requireMember(req, res, next) {
     return res.status(403).json({ error: '이 스터디의 멤버가 아닙니다.' })
   }
 
+  // 방장이 닫은 스터디는 누구도 접근할 수 없음 (데이터는 남아 있음)
+  const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { closedAt: true } })
+  if (workspace?.closedAt) {
+    return res.status(410).json({ error: '닫힌 스터디입니다.' })
+  }
+
   req.member = member
   next()
 }

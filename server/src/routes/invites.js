@@ -19,6 +19,9 @@ invitesRouter.post('/:code/accept', async (req, res) => {
     const invite = await tx.invite.findUnique({ where: { codeHash: hashToken(code) } })
     if (!invite) return { status: 404, body: { error: '존재하지 않는 초대 링크입니다.' } }
 
+    const workspace = await tx.workspace.findUnique({ where: { id: invite.workspaceId } })
+    if (workspace.closedAt) return { status: 410, body: { error: '닫힌 스터디입니다.' } }
+
     if (invite.revokedAt) return { status: 410, body: { error: '취소된 초대 링크입니다.' } }
     if (invite.expiresAt <= new Date()) return { status: 410, body: { error: '만료된 초대 링크입니다.' } }
     if (invite.maxUses !== null && invite.useCount >= invite.maxUses) {
@@ -43,8 +46,6 @@ invitesRouter.post('/:code/accept', async (req, res) => {
         tokenHash: hashToken(token),
       },
     })
-
-    const workspace = await tx.workspace.findUnique({ where: { id: invite.workspaceId } })
 
     return {
       status: 201,

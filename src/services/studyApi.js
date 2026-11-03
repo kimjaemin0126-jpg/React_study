@@ -10,7 +10,12 @@ async function request(method, path, body) {
     body: body ? JSON.stringify(body) : undefined
   })
   const data = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error(data.error ?? '요청에 실패했습니다.')
+  if (!response.ok) {
+    // 화면에서 401(권한 없음), 404/410(초대 링크 문제) 등을 구분할 수 있도록 상태 코드를 함께 담음
+    const error = new Error(data.error ?? '요청에 실패했습니다.')
+    error.status = response.status
+    throw error
+  }
   return data
 }
 
@@ -27,6 +32,8 @@ export const studyApi = {
   getInvites: (workspaceId) => request('GET', `/workspaces/${workspaceId}/invites`),
   createInvite: (workspaceId, options) => request('POST', `/workspaces/${workspaceId}/invites`, options),
   revokeInvite: (workspaceId, inviteId) => request('DELETE', `/workspaces/${workspaceId}/invites/${inviteId}`),
+
+  closeStudy: (workspaceId) => request('POST', `/workspaces/${workspaceId}/close`),
 
   acceptInvite: (code, nickname) => request('POST', `/invites/${code}/accept`, { nickname })
 }

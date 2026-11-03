@@ -14,7 +14,7 @@ async function fetchPanel(workspaceId) {
   return { myRole: study.me.role, members: memberList.members, invites: inviteList.invites }
 }
 
-export default function MembersPanel({ workspaceId, onClose }) {
+export default function MembersPanel({ workspaceId, onClose, onClosed }) {
   const [myRole, setMyRole] = useState(null)
   const [members, setMembers] = useState([])
   const [invites, setInvites] = useState([])
@@ -34,19 +34,32 @@ export default function MembersPanel({ workspaceId, onClose }) {
     return fetchPanel(workspaceId).then(applyPanel).catch((err) => setError(err.message))
   }
 
+  // 패널이 열려 있는 동안 주기적으로 다시 불러와서, 새로 들어온 팀원이 바로 보이게 함
+  // (실시간 연결은 나중 단계. 지금은 5초마다 확인하는 방식)
   useEffect(() => {
     let ignore = false
-    fetchPanel(workspaceId)
-      .then((data) => {
-        if (ignore) return
-        setMyRole(data.myRole)
-        setMembers(data.members)
-        setInvites(data.invites)
-      })
-      .catch((err) => {
-        if (!ignore) setError(err.message)
-      })
-    return () => { ignore = true }
+
+    function loadPanel() {
+      // 탭이 보이지 않을 때는 요청하지 않음
+      if (document.visibilityState !== 'visible') return
+      fetchPanel(workspaceId)
+        .then((data) => {
+          if (ignore) return
+          setMyRole(data.myRole)
+          setMembers(data.members)
+          setInvites(data.invites)
+        })
+        .catch((err) => {
+          if (!ignore) setError(err.message)
+        })
+    }
+
+    loadPanel()
+    const timer = window.setInterval(loadPanel, 5000)
+    return () => {
+      ignore = true
+      window.clearInterval(timer)
+    }
   }, [workspaceId])
 
   async function run(action) {
@@ -65,6 +78,9 @@ export default function MembersPanel({ workspaceId, onClose }) {
     if (invite.maxUses !== null && invite.useCount >= invite.maxUses) return '인원 마감'
     return '사용 가능'
   }
+
+  // 취소되었거나 만료, 인원 마감된 링크는 목록에서 뺌 (사용 가능한 링크만 표시)
+  const activeInvites = invites.filter((invite) => inviteStatus(invite) === '사용 가능')
 
   return (
     <aside className="study-panel" aria-label="팀원 목록">
@@ -117,9 +133,9 @@ export default function MembersPanel({ workspaceId, onClose }) {
             </button>
           </div>
 
-          {invites.length === 0 && <p className="study-empty">아직 만든 초대 링크가 없어요.</p>}
+          {activeInvites.length === 0 && <p className="study-empty">사용 중인 초대 링크가 없어요.</p>}
           <ul className="study-invite-list">
-            {invites.map((invite) => {
+            {activeInvites.map((invite) => {
               const status = inviteStatus(invite)
               return (
                 <li key={invite.id} className="study-invite-row">
@@ -139,6 +155,22 @@ export default function MembersPanel({ workspaceId, onClose }) {
               )
             })}
           </ul>
+        </section>
+      )}
+
+      {isOwner && (
+        <section className="study-danger-section">
+          <button
+            type="button"
+            className="study-danger"
+            onClick={() => {
+              if (window.confirm('스터디를 닫을까요? 팀원 모두 들어갈 수 없게 되고, 초대 링크도 모두 취소돼요. 데이터는 보관돼요.')) {
+                studyApi.closeStudy(workspaceId)
+                  .then(() => onClosed?.())
+                  .catch((err) => setError(err.message))
+              }
+            }}
+          >스터디 닫기</button>
         </section>
       )}
 

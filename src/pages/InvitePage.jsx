@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { createBlock } from '../editor/blockTypes'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import { studyApi } from '../services/studyApi'
@@ -12,7 +12,22 @@ export default function InvitePage() {
   const { documents, createDocument, updateDocument } = useDocumentStore()
   const [nickname, setNickname] = useState('')
   const [error, setError] = useState('')
+  const [invalidMessage, setInvalidMessage] = useState('')
   const [busy, setBusy] = useState(false)
+
+  // 취소, 만료, 없는 링크는 입력 칸 없이 안내만 보여줌
+  if (invalidMessage) {
+    return (
+      <main className="study-invite-page">
+        <div className="study-modal">
+          <h2>참여할 수 없는 링크예요</h2>
+          <p>{invalidMessage}</p>
+          <p>방장에게 새 초대 링크를 받아 주세요.</p>
+          <Link to="/">모든 문서 보기</Link>
+        </div>
+      </main>
+    )
+  }
 
   async function handleJoin(event) {
     event.preventDefault()
@@ -38,6 +53,10 @@ export default function InvitePage() {
       })
       navigate(`/documents/${documentId}`)
     } catch (err) {
+      if (err.status === 404 || err.status === 410) {
+        setInvalidMessage(err.message)
+        return
+      }
       setError(err.message)
       setBusy(false)
     }

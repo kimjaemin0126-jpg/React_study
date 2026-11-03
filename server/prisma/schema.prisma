@@ -17,6 +17,7 @@ model Workspace {
   content   Json     @default("[]") // 블록 배열
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  closedAt  DateTime? // null이면 열려 있음, 값이 있으면 방장이 닫은 시각 (데이터는 보관)
   members   Member[]
   invites   Invite[]
 }
