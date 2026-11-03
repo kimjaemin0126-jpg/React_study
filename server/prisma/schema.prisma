@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// 스터디 한 공간 = 문서 한 개
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String   // 문서 제목
+  content   Json     @default("[]") // 블록 배열
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  members   Member[]
+  invites   Invite[]
+}
+
+model Member {
+  id          String     @id @default(uuid())
+  workspaceId String
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id])
+  nickname    String
+  role        String     @default("VIEWER") // "OWNER" | "EDITOR" | "VIEWER"
+  tokenHash   String     @unique
+  removedAt   DateTime?  // null이면 활동 중, 값이 있으면 내보낸 시각
+  createdAt   DateTime   @default(now())
+  invites     Invite[]   // 이 멤버가 만든 초대 링크
+}
+
+model Invite {
+  id          String    @id @default(uuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  createdById String
+  createdBy   Member    @relation(fields: [createdById], references: [id])
+  codeHash    String    @unique // 초대 코드의 해시 (원문은 저장하지 않음)
+  role        String    @default("VIEWER") // 이 링크로 들어온 사람에게 줄 권한: "EDITOR" | "VIEWER"
+  expiresAt   DateTime
+  maxUses     Int?      // null이면 무제한
+  useCount    Int       @default(0)
+  revokedAt   DateTime? // null이면 사용 가능, 값이 있으면 방장이 취소한 시각
+  createdAt   DateTime  @default(now())
+}

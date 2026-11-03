@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ChevronRight, Copy, FilePlus2, FileText, MoreHorizontal, Star, Trash2 } from 'lucide-react'
+import { ChevronRight, Copy, Download, FilePlus2, FileText, MoreHorizontal, Star, Trash2 } from 'lucide-react'
 import DocumentEditor from '../editor/DocumentEditor'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import { formatRelativeDate, getDocumentTitle, hasParentCycle } from '../utils/documentUtils'
+import { exportDocumentToPdf } from '../utils/exportPdf'
 
 export default function DocumentPage() {
   const { documentId } = useParams()
@@ -40,6 +41,7 @@ export default function DocumentPage() {
         <span><ChevronRight size={14} />{getDocumentTitle(current)}</span>
         <div className="document-actions">
           <button type="button" className={`icon-button ${current.isFavorite ? 'active-favorite' : ''}`} title={current.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'} aria-label={current.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'} onClick={() => updateDocument(current.id, { isFavorite: !current.isFavorite })}><Star size={17} fill={current.isFavorite ? 'currentColor' : 'none'} /></button>
+          <button type="button" className="icon-button" title="PDF로 내보내기" aria-label="PDF로 내보내기" onClick={() => exportDocumentToPdf(current)}><Download size={16} /></button>
           <button type="button" className="icon-button" title="문서 복제" aria-label="문서 복제" onClick={() => {
             const copyId = duplicateDocument(current.id)
             if (copyId) navigate(`/documents/${copyId}`)
