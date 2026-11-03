@@ -55,6 +55,12 @@ export default function IdeaBoard() {
     slider.scrollBy({ left: direction * step, behavior: scrollBehavior() })
   }
 
+  // 새 아이디어 입력창 열기 (빈 폼으로 초기화 후 제목에 포커스)
+  function openCreateForm() {
+    resetForm()
+    titleRef.current?.focus()
+  }
+
 return (
     <section className="idea-board" aria-labelledby="idea-board-title">
         <div className="idea-board-heading">
