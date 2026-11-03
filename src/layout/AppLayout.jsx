@@ -4,7 +4,7 @@ import Header from './Header'
 import Sidebar from './Sidebar'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import TemplateSelector from '../common/TemplateSelector'
-import CalendarSidebar from './calender'
+import CalendarSidebar from './calendar'
 
 export default function AppLayout() {
   const [templateOpen, setTemplateOpen] = useState(false)

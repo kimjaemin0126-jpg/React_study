@@ -1,13 +1,11 @@
 import { useRef, useState } from 'react'
 import { useIdeas } from '../hooks/useIdeas'
 import './IdeaBoard.css'
-import Modal from '../common/Modal'
 
 export default function IdeaBoard() {
     const [title, setTitle] = useState('')
     const [content, setContent] = useState('')
     const [editingId, setEditingId] = useState(null)
-    const [formOpen, setFormOpen] = useState(false)
     const { ideas, error, readable, addIdea, updateIdea, deleteIdea } = useIdeas()
     const sliderRef = useRef(null)
     const titleRef = useRef(null)
@@ -16,8 +14,6 @@ export default function IdeaBoard() {
         setTitle('')
         setContent('')
         setEditingId(null)
-        setFormOpen(true)
-
     }
 
   function submitIdea(event) {
@@ -43,7 +39,6 @@ export default function IdeaBoard() {
     setEditingId(idea.id)
     setTitle(idea.title)
     setContent(idea.content)
-    setFormOpen(true)
     titleRef.current?.focus()
   }
 
