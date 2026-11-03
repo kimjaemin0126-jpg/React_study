@@ -1,0 +1,229 @@
+.task-board {
+    max-width: 1000px;
+    margin: 0 auto 48px;
+}
+
+.task-board-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.task-board-header h2 {
+    margin: 0;
+    color: var(--text-strong);
+    font-size: 22px;
+    letter-spacing: -0.03em;
+}
+
+.task-board-create {
+    padding: 7px 12px;
+    border: 0;
+    border-radius: 6px;
+    color: #fff;
+    background: #2383e2;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.task-board-create:hover {
+    background: #1b6fc1;
+}
+
+/* 세 개의 상태 열 */
+.task-board-columns {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: 14px;
+}
+
+/* 각 열의 색상 변수 */
+.task-board-gray {
+    --task-color: var(--subtle);
+    --task-tint: rgb(120 119 116 / 5%);
+    --task-badge: rgb(120 119 116 / 16%);
+    }
+
+.task-board-blue {
+    --task-color: #2383e2;
+    --task-tint: rgb(35 131 226 / 5%);
+    --task-badge: rgb(35 131 226 / 20%);
+}
+
+.task-board-green {
+    --task-color: #448361;
+    --task-tint: rgb(68 131 97 / 5%);
+    --task-badge: rgb(68 131 97 / 20%);
+}
+
+.task-board-column {
+    min-width: 0;
+    padding: 10px;
+    border-radius: 12px;
+    background: var(--task-tint);
+}
+
+.task-board-column-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 2px 4px 12px;
+}
+
+.task-board-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 3px 9px;
+    border-radius: 20px;
+    color: var(--text);
+    background: var(--task-badge);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.task-board-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--task-color);
+}
+
+.task-board-count {
+    color: var(--task-color);
+    font-size: 13px;
+}
+
+/* カード一覧 */
+.task-board-cards {
+    display: grid;
+    gap: 8px;
+}
+
+.task-board-card {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 4%);
+}
+
+.task-board-card-title {
+    display: block;
+    color: var(--text-strong);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.task-board-card-title:hover {
+    text-decoration: underline;
+}
+
+.task-board-status-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.task-board-status-field select {
+    max-width: 100%;
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    background: var(--canvas);
+    font: inherit;
+    cursor: pointer;
+}
+
+/* 각 열 아래의 새 페이지 버튼 */
+.task-board-add {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 8px;
+    padding: 12px;
+    border: 1px solid var(--task-badge);
+    border-radius: 10px;
+    color: var(--task-color);
+    background: transparent;
+    text-align: left;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.task-board-add:hover {
+    background: var(--task-badge);
+}
+
+/* 카드 추가 입력창 */
+.task-board-form {
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.task-board-form input {
+    width: 100%;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    background: var(--canvas);
+    font: inherit;
+    font-size: 14px;
+}
+
+.task-board-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.task-board-form-actions button {
+    padding: 5px 9px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    background: var(--hover);
+    cursor: pointer;
+}
+
+.task-board-form-actions button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.task-board :is(button, input, select, a):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* 본문 공간이 좁으면 보드 영역에서 가로 스크롤 */
+@media (max-width: 1100px) {
+    .task-board-columns {
+        grid-template-columns: repeat(3, minmax(230px, 1fr));
+        overflow-x: auto;
+        padding-bottom: 12px;
+    }
+}
