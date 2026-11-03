@@ -1,8 +1,10 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ChevronRight, Copy, Download, FilePlus2, FileText, MoreHorizontal, Star, Trash2 } from 'lucide-react'
+import { ChevronRight, Copy, Download, FilePlus2, FileText, MoreHorizontal, Star, Trash2, UserPlus, Users } from 'lucide-react'
 import DocumentEditor from '../editor/DocumentEditor'
+import MembersPanel from '../components/MembersPanel'
 import { useDocumentStore } from '../hooks/useDocumentStore'
+import { studyApi } from '../services/studyApi'
 import { formatRelativeDate, getDocumentTitle, hasParentCycle } from '../utils/documentUtils'
 import { exportDocumentToPdf } from '../utils/exportPdf'
 
@@ -10,6 +12,7 @@ export default function DocumentPage() {
   const { documentId } = useParams()
   const navigate = useNavigate()
   const { documents, activeDocuments, updateDocument, moveToTrash, duplicateDocument, moveDocument, createDocument } = useDocumentStore()
+  const [showMembers, setShowMembers] = useState(false)
   const current = documents.find((document) => document.id === documentId && !document.isDeleted)
   const ancestry = useMemo(() => {
     if (!current) return []
@@ -33,6 +36,23 @@ export default function DocumentPage() {
     updateDocument(current.id, { title: value })
   }
 
+  // 스터디 만들기: 방장 계정이 생기고, 지금 문서 내용을 서버에 한 번 올림
+  // (이후 편집 내용의 서버 동기화는 다음 단계)
+  async function handleCreateStudy() {
+    const nickname = window.prompt('스터디에서 사용할 닉네임을 입력해주세요 (1~20자)')?.trim()
+    if (!nickname) return
+
+    const name = getDocumentTitle(current).slice(0, 50)
+    try {
+      const { workspace } = await studyApi.createStudy(name, nickname.slice(0, 20))
+      await studyApi.saveDocument(workspace.id, { title: name, blocks: current.blocks })
+      updateDocument(current.id, { workspaceId: workspace.id })
+      setShowMembers(true)
+    } catch (err) {
+      window.alert(err.message)
+    }
+  }
+
   return (
     <article className="document-page">
       <div className="document-breadcrumb">
@@ -41,6 +61,11 @@ export default function DocumentPage() {
         <span><ChevronRight size={14} />{getDocumentTitle(current)}</span>
         <div className="document-actions">
           <button type="button" className={`icon-button ${current.isFavorite ? 'active-favorite' : ''}`} title={current.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'} aria-label={current.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'} onClick={() => updateDocument(current.id, { isFavorite: !current.isFavorite })}><Star size={17} fill={current.isFavorite ? 'currentColor' : 'none'} /></button>
+          {current.workspaceId ? (
+            <button type="button" className="text-action" onClick={() => setShowMembers((value) => !value)}><Users size={15} />팀원</button>
+          ) : (
+            <button type="button" className="text-action" onClick={handleCreateStudy}><UserPlus size={15} />스터디 만들기</button>
+          )}
           <button type="button" className="icon-button" title="PDF로 내보내기" aria-label="PDF로 내보내기" onClick={() => exportDocumentToPdf(current)}><Download size={16} /></button>
           <button type="button" className="icon-button" title="문서 복제" aria-label="문서 복제" onClick={() => {
             const copyId = duplicateDocument(current.id)
@@ -75,6 +100,9 @@ export default function DocumentPage() {
         }}><FilePlus2 size={15} />페이지 추가</button></div>
         {children.length ? children.map((child) => <Link to={`/documents/${child.id}`} key={child.id} className="child-page-link"><FileText size={16} /><span>{getDocumentTitle(child)}</span><ChevronRight size={16} /></Link>) : <p className="child-empty">이 페이지에 연결된 하위 페이지가 없습니다.</p>}
       </section>
+      {showMembers && current.workspaceId && (
+        <MembersPanel workspaceId={current.workspaceId} onClose={() => setShowMembers(false)} />
+      )}
     </article>
   )
 }
