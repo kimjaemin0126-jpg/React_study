@@ -10,50 +10,55 @@ export default function IdeaBoard() {
     const [formOpen, setFormOpen] = useState(false)
     const { ideas, error, readable, addIdea, updateIdea, deleteIdea } = useIdeas()
     const sliderRef = useRef(null)
-    const titleRef = useRef(null)
 
-    function resetForm() {
-        setTitle('')
-        setContent('')
-        setEditingId(null)
-        setFormOpen(true)
+function resetForm() {
+    setTitle('')
+    setContent('')
+    setEditingId(null)
+    setFormOpen(false)
+}
 
-    }
+function openCreateForm() {
+    setTitle('')
+    setContent('')
+    setEditingId(null)
+    resetForm()
+    setFormOpen(true)
+}
 
-  function submitIdea(event) {
+function submitIdea(event) {
     event.preventDefault()
     if (!title.trim()) return
     const saved = editingId
-      ? updateIdea(editingId, title, content)
-      : addIdea(title, content)
+        ? updateIdea(editingId, title, content)
+        : addIdea(title, content)
     if (!saved) return
     const added = !editingId
     resetForm()
     if (added) requestAnimationFrame(() => {
-      const slider = sliderRef.current
-      slider?.scrollTo({ left: slider.scrollWidth, behavior: scrollBehavior() })
+        const slider = sliderRef.current
+        slider?.scrollTo({ left: slider.scrollWidth, behavior: scrollBehavior() })
     })
-  }
+}
 
-  function scrollBehavior() {
+function scrollBehavior() {
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'
-  }
+}
 
-  function editIdea(idea) {
+function editIdea(idea) {
     setEditingId(idea.id)
     setTitle(idea.title)
     setContent(idea.content)
     setFormOpen(true)
-    titleRef.current?.focus()
-  }
+}
 
-  function scrollCards(direction) {
+function scrollCards(direction) {
     const slider = sliderRef.current
     if (!slider) return
     const card = slider.querySelector('.idea-board-card')
     const step = (card?.getBoundingClientRect().width ?? 260) + 16
     slider.scrollBy({ left: direction * step, behavior: scrollBehavior() })
-  }
+}
 
 return (
     <section className="idea-board" aria-labelledby="idea-board-title">
@@ -62,42 +67,62 @@ return (
             <span aria-live="polite">{ideas.length}개의 아이디어</span>
         </div>
 
-    <form className="idea-board-form" onSubmit={submitIdea}>
         <button
             type="button"
-            className = "button"
+            className="button"
             onClick={openCreateForm}
-            disabled={!readable}
-        />
+                disabled={!readable}
+            >
+                + 아이디어 작성
+        </button>
 
-        {editingId && <strong className="idea-board-edit-label">아이디어 수정 중</strong>}
-        <input
-            ref={titleRef}
-            aria-label="아이디어 제목"
-            placeholder="어떤 아이디어가 떠올랐나요?"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            required
-            disabled={!readable}
-        />
+        {formOpen && (
+        <Modal
+            title={editingId ? '아이디어 수정' : '아이디어 작성'}
+            onClose={resetForm}
+            className="idea-write-modal"
+        >
+        <form className="idea-board-form" onSubmit={submitIdea}>
+            <input
+                autoFocus
+                aria-label="아이디어 제목"
+                placeholder="어떤 아이디어가 떠올랐나요?"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                required
+                disabled={!readable}
+            />
 
-        <textarea
-            aria-label="아이디어 내용"
-            placeholder="생각을 간단하게 적어 보세요."
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
-            rows={3}
-            disabled={!readable}
-        />
+            <textarea
+                aria-label="아이디어 내용"
+                placeholder="생각을 간단하게 적어 보세요."
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+                rows={6}
+                disabled={!readable}
+            />
 
-        <div className="idea-board-form-actions">
-            {editingId && <button type="button" onClick={resetForm}>수정 취소</button>}
-            <button type="submit" disabled={!title.trim() || !readable}>
-                {editingId ? '수정 저장' : '+ 아이디어 추가'}
-            </button>
-        </div>
-        <small className="idea-board-note">아이디어는 이 보드에만 저장되며 문서로 생성되지 않습니다.</small>
+            {error && (
+                <p className="idea-board-error" role="alert">
+                    {error}
+                </p>
+            )}
+
+            <div className="idea-board-form-actions">
+                <button type="button" onClick={resetForm}>
+                    취소
+                </button>
+
+                <button
+                    type="submit"
+                    disabled={!title.trim() || !readable}
+                >
+                    {editingId ? '수정 저장' : '아이디어 추가'}
+                </button>
+            </div>
     </form>
+</Modal>
+)}
     {error && <p className="idea-board-error" role="alert">{error}</p>}
 
     {ideas.length === 0 ? (

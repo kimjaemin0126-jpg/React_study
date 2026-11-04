@@ -1442,3 +1442,59 @@ select:focus-visible {
     }
   }
 
+.modal {
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+}
+
+.idea-write-modal .idea-board-form {
+  margin: 16px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+/*하위페이지*/
+.child-page-modal {
+  width: min(820px, 100%);
+}
+
+.child-page-form {
+  margin-top: 16px;
+}
+
+.child-page-title-field {
+  display: grid;
+  gap: 8px;
+  color: var(--subtle);
+  font-size: 13px;
+}
+
+.child-page-title-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-strong);
+  background: var(--canvas);
+  font: inherit;
+  font-size: 20px;
+}
+
+.child-page-editor {
+  margin-top: 20px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.child-page-editor .editor {
+  margin-top: 0;
+}
+
+.child-page-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}

@@ -1,14 +1,17 @@
-import { useMemo } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { ChevronRight, Copy, FilePlus2, FileText, MoreHorizontal, Star, Trash2 } from 'lucide-react'
 import DocumentEditor from '../editor/DocumentEditor'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import { formatRelativeDate, getDocumentTitle, hasParentCycle } from '../utils/documentUtils'
+import ChildPageModal from '../common/ChildPageModal'
 
 export default function DocumentPage() {
   const { documentId } = useParams()
   const navigate = useNavigate()
-  const { documents, activeDocuments, updateDocument, moveToTrash, duplicateDocument, moveDocument, createDocument } = useDocumentStore()
+  const { openChildPage } = useOutletContext()
+  const [childParentId, setChildParentId] = useState(null)
+  const { documents, activeDocuments, updateDocument, moveToTrash, duplicateDocument, moveDocument} = useDocumentStore()
   const current = documents.find((document) => document.id === documentId && !document.isDeleted)
   const ancestry = useMemo(() => {
     if (!current) return []
@@ -67,12 +70,16 @@ export default function DocumentPage() {
       <div className="document-subtitle">{current.title.trim() ? '나만의 생각과 지식을 정리해 보세요.' : '제목 없음'}</div>
       <DocumentEditor blocks={current.blocks} onChange={(blocks) => updateDocument(current.id, { blocks })} />
       <section className="child-pages">
-        <div className="child-pages-heading"><h2>하위 페이지</h2><button type="button" className="text-action" onClick={() => {
-          const childId = createDocument('blank', current.id)
-          navigate(`/documents/${childId}`)
-        }}><FilePlus2 size={15} />페이지 추가</button></div>
+        <div className="child-pages-heading"><h2>하위 페이지</h2><button type="button" className="text-action" onClick={() => openChildPage(current.id)}><FilePlus2 size={15} />페이지 추가</button></div>
         {children.length ? children.map((child) => <Link to={`/documents/${child.id}`} key={child.id} className="child-page-link"><FileText size={16} /><span>{getDocumentTitle(child)}</span><ChevronRight size={16} /></Link>) : <p className="child-empty">이 페이지에 연결된 하위 페이지가 없습니다.</p>}
       </section>
+    {childParentId && (
+      <ChildPageModal
+        key={childParentId}
+        parentId={childParentId}
+        onClose={() => setChildParentId(null)}
+      />
+    )}
     </article>
   )
 }
