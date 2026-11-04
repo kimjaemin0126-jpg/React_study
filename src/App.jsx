@@ -4,6 +4,7 @@ import AppLayout from './layout/AppLayout'
 import DocumentPage from './pages/DocumentPage'
 import FavoritesPage from './pages/FavoritesPage'
 import HomePage from './pages/HomePage'
+import InvitePage from './pages/InvitePage'
 import NotFoundPage from './pages/NotFoundPage'
 import TrashPage from './pages/TrashPage'
 import './App.css'
@@ -13,6 +14,7 @@ function App() {
     <BrowserRouter>
       <DocumentProvider>
         <Routes>
+          <Route path="invite/:code" element={<InvitePage />} />
           <Route element={<AppLayout />}>
             <Route index element={<HomePage />} />
             <Route path="favorites" element={<FavoritesPage />} />
