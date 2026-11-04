@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, Search, Sun, Moon, X } from 'lucide-react'
+import { CalendarDays, Menu, Search, Sun, Moon, X } from 'lucide-react'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import { getDocumentTitle } from '../utils/documentUtils'
 
-export default function Header({ onOpenSidebar }) {
+export default function Header({ onOpenSidebar, onToggleCalendar }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('folio-theme') === 'dark')
@@ -43,6 +43,7 @@ export default function Header({ onOpenSidebar }) {
         <span className={`save-indicator ${saveState}`} aria-live="polite">
           <i />{saveState === 'saving' ? '저장 중' : saveState === 'error' ? '저장 실패' : '저장됨'}
         </span>
+        <button type="button" className="icon-button" title="캘린더 열기" aria-label="캘린더 열기" onClick={onToggleCalendar}><CalendarDays size={18} /></button>
         <button type="button" className="icon-button" title="검색 (Ctrl/⌘ + K)" aria-label="검색" onClick={() => setSearchOpen(true)}><Search size={18} /></button>
         <button type="button" className="icon-button" title="테마 전환" aria-label="테마 전환" onClick={toggleTheme}>{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
       </div>

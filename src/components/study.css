@@ -9,8 +9,8 @@
   overflow-y: auto;
   padding: 16px;
   border-radius: 12px;
-  background: var(--surface, #fff);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.15);
+  background: var(--surface);
+  box-shadow: var(--shadow);
   z-index: 40;
 }
 
@@ -49,19 +49,19 @@
   font-size: 12px;
   padding: 2px 8px;
   border-radius: 999px;
-  background: #eee;
+  background: var(--hover);
 }
-.study-role-badge.role-owner { background: #ffe8a3; }
-.study-role-badge.role-editor { background: #cfe8ff; }
+.study-role-badge.role-owner { background: var(--primary-soft); color: var(--text-strong); }
+.study-role-badge.role-editor { background: var(--focus-soft); color: var(--text-strong); }
 
 .study-invite-section {
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--border);
   padding-top: 12px;
 }
 
-.study-empty { font-size: 13px; color: #888; }
-.study-error { color: #c0392b; font-size: 13px; }
-.study-warning { font-size: 13px; color: #8a6d00; background: #fff6d6; padding: 8px; border-radius: 6px; }
+.study-empty { font-size: 13px; color: var(--muted); }
+.study-error { color: var(--danger); font-size: 13px; }
+.study-warning { font-size: 13px; color: var(--text); background: var(--focus-soft); padding: 8px; border-radius: 6px; }
 
 .study-primary,
 .study-secondary {
@@ -74,15 +74,15 @@
   font-size: 13px;
   cursor: pointer;
 }
-.study-primary { background: #2f6fed; color: #fff; }
-.study-secondary { background: #eef2f8; color: #222; }
+.study-primary { background: var(--primary); color: #fff; }
+.study-secondary { background: var(--hover); color: var(--text); }
 .study-primary.small,
 .study-secondary.small { padding: 4px 8px; font-size: 12px; }
 
 .study-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgb(0 0 0 / 0.35);
+  background: rgb(0 0 0 / 0.3);
   display: grid;
   place-items: center;
   z-index: 60;
@@ -90,7 +90,7 @@
 
 .study-modal {
   width: min(380px, calc(100vw - 32px));
-  background: var(--surface, #fff);
+  background: var(--surface);
   border-radius: 12px;
   padding: 20px;
   display: grid;
@@ -108,7 +108,7 @@
 .study-field input[type='number'] {
   padding: 6px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
 }
 .study-field-row { grid-template-columns: auto 1fr; align-items: center; }
 
@@ -132,7 +132,7 @@
 }
 
 .study-danger-section {
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--border);
   margin-top: 12px;
   padding-top: 12px;
 }
@@ -144,6 +144,18 @@
   padding: 8px 12px;
   font-size: 13px;
   cursor: pointer;
-  background: #c43b46;
+  background: var(--danger);
   color: #fff;
+}
+
+/* 캘린더가 열려 있으면 팀원 패널을 캘린더 왼쪽에 둔다 (겹침 방지) */
+body:has(.calendar-panel) .study-panel {
+  right: 356px;
+}
+
+/* 좁은 화면에서는 캘린더와 팀원 패널을 동시에 띄우지 않는다 */
+@media (max-width: 1179px) {
+  body:has(.calendar-panel) .study-panel {
+    display: none;
+  }
 }

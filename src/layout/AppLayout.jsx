@@ -1,16 +1,26 @@
 import { useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import TemplateSelector from '../common/TemplateSelector'
-import CalendarSidebar from './calendar'
+import CalendarPanel from '../calendar/CalendarPanel'
+import WorkspaceCalendarPanel from '../calendar/WorkspaceCalendarPanel'
+import { useCalendarPanel } from '../calendar/useCalendarPanel'
+import '../calendar/calendar.css'
+import { getDocumentTitle } from '../utils/documentUtils'
 
 export default function AppLayout() {
   const [templateOpen, setTemplateOpen] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const navigate = useNavigate()
-  const { createDocument, storageError } = useDocumentStore()
+  const location = useLocation()
+  const { documents, activeDocuments, createDocument, updateDocument, storageError } = useDocumentStore()
+  const calendar = useCalendarPanel()
+
+  // 문서 화면에서는 그 문서의 일정을, 나머지 화면에서는 전체 일정을 보여줌
+  const documentId = location.pathname.match(/^\/documents\/([^/]+)/)?.[1]
+  const currentDocument = documents.find((document) => document.id === documentId && !document.isDeleted)
 
   function createFromTemplate(templateId, parentId = null) {
     const id = createDocument(templateId, parentId)
@@ -29,15 +39,22 @@ export default function AppLayout() {
         onNewChild={(parentId) => createFromTemplate('blank', parentId)}
       />
       <div className="main-column">
-        <Header onOpenSidebar={() => setMobileSidebarOpen(true)} />
+        <Header onOpenSidebar={() => setMobileSidebarOpen(true)} onToggleCalendar={calendar.toggle} />
         {storageError && <div className="storage-alert" role="alert">{storageError}</div>}
-        <div className="content-with-calendar">
-          <main className="main-content">
-            <Outlet />
-          </main>
+        <main className="main-content">
+          <Outlet />
+        </main>
 
-          <CalendarSidebar />
-        </div>
+        {calendar.isOpen && (currentDocument ? (
+          <CalendarPanel
+            documentTitle={getDocumentTitle(currentDocument)}
+            events={currentDocument.events ?? []}
+            onChange={(events) => updateDocument(currentDocument.id, { events })}
+            calendar={calendar}
+          />
+        ) : (
+          <WorkspaceCalendarPanel documents={activeDocuments} calendar={calendar} />
+        ))}
       </div>
       {templateOpen && (
         <TemplateSelector
