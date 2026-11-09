@@ -1,18 +1,22 @@
 import { useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useMatch, useNavigate } from 'react-router-dom'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import TemplateSelector from '../common/TemplateSelector'
-import CalendarSidebar from './calender'
 import ChildPageModal from '../common/ChildPageModal'
+import CalendarContent from '../calendar/CalendarContent'
+import { useCalendarPanel } from '../calendar/useCalendarPanel'
+import '../calendar/calendar.css'
 
 export default function AppLayout() {
   const [templateOpen, setTemplateOpen] = useState(false)
   const [childParentId, setChildParentId] = useState(null)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const navigate = useNavigate()
-  const { createDocument, storageError } = useDocumentStore()
+  const calendar = useCalendarPanel()
+  const documentMatch = useMatch('/documents/:documentId')
+  const { activeDocuments, createDocument, updateDocument, storageError } = useDocumentStore()
 
   function createFromTemplate(templateId, parentId = null) {
     const id = createDocument(templateId, parentId)
@@ -38,14 +42,27 @@ export default function AppLayout() {
       <div className="main-column">
         <Header onOpenSidebar={() => setMobileSidebarOpen(true)} />
         {storageError && <div className="storage-alert" role="alert">{storageError}</div>}
-        <div className="content-with-calendar">
-          <main className="main-content">
-            <Outlet context={{ openChildPage }} />
-          </main>
+        <main className="main-content">
+          {!documentMatch && <button
+            type="button"
+            className="button"
+            aria-expanded={calendar.isOpen}
+            onClick={calendar.toggle}
+          >
+            {calendar.isOpen ? '캘린더 닫기' : '전체 캘린더 열기'}
+          </button>}
 
-          <CalendarSidebar />
-        </div>
+          <Outlet context={{ openChildPage, calendar }} />
+
+          <CalendarContent
+            documentId={documentMatch?.params.documentId}
+            documents={activeDocuments}
+            updateDocument={updateDocument}
+            calendar={calendar}
+          />
+        </main>
       </div>
+
       {templateOpen && (
         <TemplateSelector
           onClose={() => setTemplateOpen(false)}
@@ -59,6 +76,6 @@ export default function AppLayout() {
           onClose={() => setChildParentId(null)}
         />
       )}
-    </div>
+      </div>
   )
 }

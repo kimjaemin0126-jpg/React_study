@@ -1,0 +1,357 @@
+/* 오른쪽 캘린더 패널 */
+.calendar-panel {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  bottom: 0;
+  z-index: 7;
+  width: 340px;
+  max-width: 100vw;
+  overflow-y: auto;
+  padding: 18px 16px 24px;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* 패널이 본문을 가리지 않도록 본문 영역을 왼쪽으로 줄인다. */
+@media (min-width: 1180px) {
+  .main-content:has(.calendar-panel) {
+    padding-right: 372px;
+  }
+}
+
+@media (max-width: 1179px) {
+  .calendar-panel {
+    box-shadow: var(--shadow);
+  }
+}
+
+.calendar-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.calendar-panel-heading > div {
+  min-width: 0;
+}
+
+.calendar-panel-heading h2 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 15px;
+}
+
+.calendar-panel-heading p {
+  overflow: hidden;
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 14px;
+}
+
+.calendar-month-nav strong {
+  min-width: 92px;
+  color: var(--text-strong);
+  font-size: 13px;
+  text-align: center;
+}
+
+.calendar-month-nav .text-action {
+  margin-left: auto;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-top: 8px;
+}
+
+.calendar-weekday {
+  padding: 5px 0;
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+.calendar-day {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.calendar-day:hover {
+  background: var(--hover);
+}
+
+.calendar-day.is-sunday {
+  color: var(--danger);
+}
+
+.calendar-day.is-saturday {
+  color: var(--primary);
+}
+
+.calendar-day.is-outside {
+  color: var(--faint);
+}
+
+.calendar-day.is-today {
+  box-shadow: inset 0 0 0 1px var(--primary);
+  font-weight: 700;
+}
+
+.calendar-day.is-selected {
+  color: var(--canvas);
+  background: var(--primary);
+  font-weight: 700;
+}
+
+.calendar-dots {
+  display: flex;
+  gap: 2px;
+  height: 4px;
+}
+
+.calendar-dots b {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.calendar-day.is-selected .calendar-dots b {
+  background: var(--canvas);
+}
+
+.calendar-day-detail {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.calendar-day-detail h3 {
+  margin: 0 0 8px;
+  color: var(--text-strong);
+  font-size: 13px;
+}
+
+.calendar-empty {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.calendar-event-list {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.calendar-event-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 3px 4px 3px 8px;
+  border-radius: 6px;
+}
+
+.calendar-event-list li:hover,
+.calendar-event-list li.is-editing {
+  background: var(--hover);
+}
+
+/* 터치 화면에서도 보이도록 수정·삭제 버튼은 항상 표시한다. */
+.calendar-event-list .block-delete {
+  opacity: 1;
+}
+
+.calendar-event-time {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-event-title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.calendar-form {
+  display: grid;
+  gap: 8px;
+}
+
+.calendar-form input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--canvas);
+  font-size: 12px;
+}
+
+.calendar-form-row {
+  display: flex;
+  gap: 8px;
+}
+
+.calendar-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.calendar-form .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* 문서 제목 아래 일정 요약 */
+.document-schedule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.document-schedule-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.schedule-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--subtle);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.schedule-chip:hover {
+  border-color: var(--primary-soft);
+  background: var(--hover);
+}
+
+.schedule-chip span {
+  flex: 0 0 auto;
+}
+
+.schedule-chip strong {
+  overflow: hidden;
+  color: var(--text-strong);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-note {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.icon-button.is-active {
+  color: var(--primary);
+  background: var(--focus-soft);
+}
+
+/* 모든 문서 화면의 전체 일정 */
+.page-title-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.button.is-active {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--focus-soft);
+}
+
+.calendar-event-list li:has(.calendar-event-link) {
+  padding: 0;
+}
+
+.calendar-event-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.calendar-event-link .calendar-event-time {
+  grid-column: 1;
+}
+
+.calendar-event-link .calendar-event-title {
+  grid-column: 1;
+}
+
+.calendar-event-document {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  max-width: 110px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.calendar-period-note {
+  padding: 8px;
+  border-radius: 6px;
+  color: var(--subtle);
+  background: var(--focus-soft);
+  font-size: 12px;
+  line-height: 1.6;
+}

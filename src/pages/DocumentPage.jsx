@@ -1,16 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { ChevronRight, Copy, FilePlus2, FileText, MoreHorizontal, Star, Trash2 } from 'lucide-react'
+import { CalendarDays, ChevronRight, Copy, FilePlus2, FileText, MoreHorizontal, Star, Trash2 } from 'lucide-react'
 import DocumentEditor from '../editor/DocumentEditor'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import { formatRelativeDate, getDocumentTitle, hasParentCycle } from '../utils/documentUtils'
-import ChildPageModal from '../common/ChildPageModal'
+import DocumentSchedule from '../calendar/DocumentSchedule'
 
 export default function DocumentPage() {
   const { documentId } = useParams()
   const navigate = useNavigate()
-  const { openChildPage } = useOutletContext()
-  const [childParentId, setChildParentId] = useState(null)
+  const { openChildPage, calendar } = useOutletContext()
   const { documents, activeDocuments, updateDocument, moveToTrash, duplicateDocument, moveDocument} = useDocumentStore()
   const current = documents.find((document) => document.id === documentId && !document.isDeleted)
   const ancestry = useMemo(() => {
@@ -43,6 +42,14 @@ export default function DocumentPage() {
         <span><ChevronRight size={14} />{getDocumentTitle(current)}</span>
         <div className="document-actions">
           <button type="button" className={`icon-button ${current.isFavorite ? 'active-favorite' : ''}`} title={current.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'} aria-label={current.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'} onClick={() => updateDocument(current.id, { isFavorite: !current.isFavorite })}><Star size={17} fill={current.isFavorite ? 'currentColor' : 'none'} /></button>
+          <button
+            type="button"
+            className={`icon-button${calendar.isOpen ? ' is-active' : ''}`}
+            title={calendar.isOpen ? '이 문서의 캘린더 닫기' : '이 문서의 캘린더 열기'}
+            aria-label={calendar.isOpen ? '이 문서의 캘린더 닫기' : '이 문서의 캘린더 열기'}
+            aria-expanded={calendar.isOpen}
+            onClick={calendar.toggle}
+          ><CalendarDays size={17} /></button>
           <button type="button" className="icon-button" title="문서 복제" aria-label="문서 복제" onClick={() => {
             const copyId = duplicateDocument(current.id)
             if (copyId) navigate(`/documents/${copyId}`)
@@ -68,18 +75,12 @@ export default function DocumentPage() {
       <div className="document-meta"><FileText size={15} /><span>마지막 수정 {formatRelativeDate(current.updatedAt)}</span></div>
       <input className="document-title-input" value={current.title} placeholder="제목 없음" onChange={(event) => changeTitle(event.target.value)} aria-label="문서 제목" />
       <div className="document-subtitle">{current.title.trim() ? '나만의 생각과 지식을 정리해 보세요.' : '제목 없음'}</div>
+      <DocumentSchedule events={current.events ?? []} onOpen={calendar.open} />
       <DocumentEditor blocks={current.blocks} onChange={(blocks) => updateDocument(current.id, { blocks })} />
       <section className="child-pages">
         <div className="child-pages-heading"><h2>하위 페이지</h2><button type="button" className="text-action" onClick={() => openChildPage(current.id)}><FilePlus2 size={15} />페이지 추가</button></div>
         {children.length ? children.map((child) => <Link to={`/documents/${child.id}`} key={child.id} className="child-page-link"><FileText size={16} /><span>{getDocumentTitle(child)}</span><ChevronRight size={16} /></Link>) : <p className="child-empty">이 페이지에 연결된 하위 페이지가 없습니다.</p>}
       </section>
-    {childParentId && (
-      <ChildPageModal
-        key={childParentId}
-        parentId={childParentId}
-        onClose={() => setChildParentId(null)}
-      />
-    )}
     </article>
   )
 }
