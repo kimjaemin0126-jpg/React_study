@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronRight, ChevronsLeft, FileText, Home, Plus, Search, Star, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { CalendarDays,Lightbulb,ChevronDown, ChevronRight, ChevronsLeft, FileText, Home, Plus, Search, Star, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import { getDocumentTitle } from '../utils/documentUtils'
 
@@ -39,13 +39,79 @@ export default function Sidebar({ mobileOpen, onCloseMobile, onNewPage, onNewChi
         <button type="button" className="icon-button mobile-close" aria-label="사이드바 닫기" onClick={onCloseMobile}><ChevronsLeft size={17} /></button>
       </div>
       <nav className="sidebar-nav" aria-label="워크스페이스">
-        <NavLink to="/" end title="홈"><Home size={17} /><span>홈</span></NavLink>
-        <button type="button" onClick={() => document.querySelector('.header-actions button[aria-label="검색"]')?.click()} title="빠른 검색"><Search size={17} /><span>빠른 검색</span><kbd>⌘ K</kbd></button>
+        <NavLink
+          to="/"
+          end
+          title="홈"
+          onClick={onCloseMobile}
+        >
+          <Home size={17} />
+          <span>홈</span>
+        </NavLink>
+
+        <NavLink
+          to="/tasks"
+          title="일정"
+          onClick={onCloseMobile}
+        >
+          <CalendarDays size={17} />
+          <span>일정</span>
+        </NavLink>
+
+        <NavLink
+          to="/ideas"
+          title="아이디어"
+          onClick={onCloseMobile}
+        >
+          <Lightbulb size={17} />
+          <span>아이디어</span>
+        </NavLink>
+
+        <button
+          type="button"
+          title="빠른 검색"
+          onClick={() => {
+            onCloseMobile()
+            document
+              .querySelector('.header-actions button[aria-label="검색"]')
+              ?.click()
+          }}
+        >
+          <Search size={17} />
+          <span>빠른 검색</span>
+          <kbd>⌘ K</kbd>
+        </button>
+
         <div className="sidebar-divider" />
         <p className="sidebar-label">라이브러리</p>
-        <NavLink to="/favorites" title="즐겨찾기"><Star size={17} /><span>즐겨찾기</span>{favorites.length > 0 && <small>{favorites.length}</small>}</NavLink>
-        <NavLink to="/" end title="모든 문서"><FileText size={17} /><span>모든 문서</span></NavLink>
-        <NavLink to="/trash" title="휴지통"><Trash2 size={17} /><span>휴지통</span></NavLink>
+
+        <NavLink
+          to="/documents"
+          title="모든 문서"
+          onClick={onCloseMobile}
+        >
+          <FileText size={17} />
+          <span>모든 문서</span>
+        </NavLink>
+
+        <NavLink
+          to="/favorites"
+          title="즐겨찾기"
+          onClick={onCloseMobile}
+        >
+          <Star size={17} />
+          <span>즐겨찾기</span>
+          {favorites.length > 0 && <small>{favorites.length}</small>}
+        </NavLink>
+
+        <NavLink
+          to="/trash"
+          title="휴지통"
+          onClick={onCloseMobile}
+        >
+          <Trash2 size={17} />
+          <span>휴지통</span>
+        </NavLink>
       </nav>
       <div className="tree-heading"><span className="sidebar-label">페이지</span><button type="button" className="icon-button" aria-label="새 페이지" title="새 페이지" onClick={onNewPage}><Plus size={16} /></button></div>
       <div className="document-tree">{roots.length ? roots.map((document) => <TreeItem key={document.id} document={document} documents={activeDocuments} onNewChild={onNewChild} />) : <p className="tree-empty">페이지가 없습니다.</p>}</div>

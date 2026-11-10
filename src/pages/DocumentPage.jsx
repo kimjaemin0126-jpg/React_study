@@ -25,7 +25,7 @@ export default function DocumentPage() {
     return path
   }, [activeDocuments, current])
 
-  if (!current) return <div className="document-missing"><FileText size={24} /><h2>문서를 찾을 수 없습니다</h2><p>문서가 삭제되었거나 더 이상 존재하지 않습니다.</p><Link to="/">모든 문서 보기</Link></div>
+  if (!current) return <div className="document-missing"><FileText size={24} /><h2>문서를 찾을 수 없습니다</h2><p>문서가 삭제되었거나 더 이상 존재하지 않습니다.</p><Link to="/documents">모든 문서 보기</Link></div>
 
   const children = activeDocuments.filter((document) => document.parentId === current.id)
   const possibleParents = activeDocuments.filter((document) => document.id !== current.id && !hasParentCycle(activeDocuments, current.id, document.id))
@@ -37,7 +37,7 @@ export default function DocumentPage() {
   return (
     <article className="document-page">
       <div className="document-breadcrumb">
-        <Link to="/">모든 문서</Link>
+        <Link to="/documents">모든 문서</Link>
         {ancestry.map((parent) => <span key={parent.id} className="breadcrumb-parent"><ChevronRight size={14} /><Link to={`/documents/${parent.id}`}>{getDocumentTitle(parent)}</Link></span>)}
         <span><ChevronRight size={14} />{getDocumentTitle(current)}</span>
         <div className="document-actions">

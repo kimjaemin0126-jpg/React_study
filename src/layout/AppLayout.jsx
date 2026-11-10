@@ -16,6 +16,12 @@ export default function AppLayout() {
   const navigate = useNavigate()
   const calendar = useCalendarPanel()
   const documentMatch = useMatch('/documents/:documentId')
+  const tasksMatch = useMatch('/tasks')
+  const displayedCalendar = {
+    ...calendar,
+    isOpen: Boolean(tasksMatch) || (Boolean(documentMatch) && calendar.isOpen),
+    isPinned: Boolean(tasksMatch),
+  }
   const { activeDocuments, createDocument, updateDocument, storageError } = useDocumentStore()
 
   function createFromTemplate(templateId, parentId = null) {
@@ -43,22 +49,13 @@ export default function AppLayout() {
         <Header onOpenSidebar={() => setMobileSidebarOpen(true)} />
         {storageError && <div className="storage-alert" role="alert">{storageError}</div>}
         <main className="main-content">
-          {!documentMatch && <button
-            type="button"
-            className="button"
-            aria-expanded={calendar.isOpen}
-            onClick={calendar.toggle}
-          >
-            {calendar.isOpen ? '캘린더 닫기' : '전체 캘린더 열기'}
-          </button>}
-
-          <Outlet context={{ openChildPage, calendar }} />
+          <Outlet context={{ openChildPage, calendar: displayedCalendar, openNewPage: () => setTemplateOpen(true),}} />
 
           <CalendarContent
             documentId={documentMatch?.params.documentId}
             documents={activeDocuments}
             updateDocument={updateDocument}
-            calendar={calendar}
+            calendar={displayedCalendar}
           />
         </main>
       </div>

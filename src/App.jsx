@@ -7,6 +7,9 @@ import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import TrashPage from './pages/TrashPage'
 import './App.css'
+import TasksPage from './pages/TasksPage'
+import IdeaPage from './pages/IdeaPage'
+import AllDocumentPage from './pages/AllDocumentPage'
 
 function App() {
   return (
@@ -15,6 +18,9 @@ function App() {
         <Routes>
           <Route element={<AppLayout />}>
             <Route index element={<HomePage />} />
+            <Route path="tasks" element={<TasksPage />} />
+            <Route path="ideas" element={<IdeaPage />} />
+            <Route path="documents" element={<AllDocumentPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
             <Route path="trash" element={<TrashPage />} />
             <Route path="documents/:documentId" element={<DocumentPage />} />
