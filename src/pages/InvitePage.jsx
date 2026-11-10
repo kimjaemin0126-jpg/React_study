@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { createBlock } from '../editor/blockTypes'
 import { useDocumentStore } from '../hooks/useDocumentStore'
+import HomePage from './HomePage'
 import { studyApi } from '../services/studyApi'
 import '../components/study.css'
 
-// 초대 링크로 들어왔을 때: 닉네임 입력 → 스터디 참여 → 문서를 이 브라우저에 불러오기
+// 초대 링크로 들어왔을 때: 홈 화면을 먼저 보여주고, 그 위에 닉네임 입력창을 띄움
 export default function InvitePage() {
   const { code } = useParams()
   const navigate = useNavigate()
@@ -14,20 +15,6 @@ export default function InvitePage() {
   const [error, setError] = useState('')
   const [invalidMessage, setInvalidMessage] = useState('')
   const [busy, setBusy] = useState(false)
-
-  // 취소, 만료, 없는 링크는 입력 칸 없이 안내만 보여줌
-  if (invalidMessage) {
-    return (
-      <main className="study-invite-page">
-        <div className="study-modal">
-          <h2>참여할 수 없는 링크예요</h2>
-          <p>{invalidMessage}</p>
-          <p>방장에게 새 초대 링크를 받아 주세요.</p>
-          <Link to="/">모든 문서 보기</Link>
-        </div>
-      </main>
-    )
-  }
 
   async function handleJoin(event) {
     event.preventDefault()
@@ -38,7 +25,7 @@ export default function InvitePage() {
       const { workspace } = await studyApi.acceptInvite(code, nickname.trim())
 
       // 이미 이 브라우저에 같은 스터디 문서가 있으면 그대로 연다
-      const existing = documents.find((item) => item.workspaceId === workspace.id && !item.isDeleted)
+      const existing = documents.find((item) => item.workspaceId === workspace.id && !item.isDeleted && !item.studyLeft)
       if (existing) {
         navigate(`/documents/${existing.id}`)
         return
@@ -63,24 +50,36 @@ export default function InvitePage() {
   }
 
   return (
-    <main className="study-invite-page">
-      <form className="study-modal" onSubmit={handleJoin}>
-        <h2>스터디 참여</h2>
-        <p>이 스터디에서 사용할 닉네임을 입력해주세요.</p>
-        <label className="study-field">
-          <span>닉네임 (1~20자)</span>
-          <input
-            value={nickname}
-            maxLength={20}
-            onChange={(event) => setNickname(event.target.value)}
-            required
-          />
-        </label>
-        {error && <p className="study-error" role="alert">{error}</p>}
-        <button type="submit" className="study-primary" disabled={busy || !nickname.trim()}>
-          {busy ? '참여 중...' : '참여하기'}
-        </button>
-      </form>
-    </main>
+    <>
+      <HomePage />
+      <div className="study-modal-backdrop">
+        {invalidMessage ? (
+          <div className="study-modal" role="dialog" aria-label="참여할 수 없는 링크">
+            <h2>참여할 수 없는 링크예요</h2>
+            <p>{invalidMessage}</p>
+            <p>방장에게 새 초대 링크를 받아 주세요.</p>
+            <Link to="/">홈으로 돌아가기</Link>
+          </div>
+        ) : (
+          <form className="study-modal" role="dialog" aria-label="스터디 참여" onSubmit={handleJoin}>
+            <h2>스터디 참여</h2>
+            <p>이 스터디에서 사용할 닉네임을 입력해주세요.</p>
+            <label className="study-field">
+              <span>닉네임 (1~20자)</span>
+              <input
+                value={nickname}
+                maxLength={20}
+                onChange={(event) => setNickname(event.target.value)}
+                required
+              />
+            </label>
+            {error && <p className="study-error" role="alert">{error}</p>}
+            <button type="submit" className="study-primary" disabled={busy || !nickname.trim()}>
+              {busy ? '참여 중...' : '참여하기'}
+            </button>
+          </form>
+        )}
+      </div>
+    </>
   )
 }

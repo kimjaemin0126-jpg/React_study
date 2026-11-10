@@ -1,3 +1,4 @@
+import { useDialog } from '../context/dialogContext'
 import { useRef, useState } from 'react'
 import { useIdeas } from '../hooks/useIdeas'
 import './IdeaBoard.css'
@@ -9,6 +10,7 @@ export default function IdeaBoard() {
     const [editingId, setEditingId] = useState(null)
     const [formOpen, setFormOpen] = useState(false)
     const { ideas, error, readable, addIdea, updateIdea, deleteIdea } = useIdeas()
+  const dialog = useDialog()
     const sliderRef = useRef(null)
 
 function resetForm() {
@@ -155,8 +157,8 @@ return (
                 </span>
                 <div className="idea-board-card-actions">
                     <button type="button" aria-label={`${idea.title} 수정`} onClick={() => editIdea(idea)}>수정</button>
-                    <button type="button" className="idea-board-delete" aria-label={`${idea.title} 삭제`} onClick={() => {
-                        if (window.confirm(`"${idea.title}" 아이디어를 삭제할까요? 삭제하면 되돌릴 수 없습니다.`) && deleteIdea(idea.id)) {
+                    <button type="button" className="idea-board-delete" aria-label={`${idea.title} 삭제`} onClick={async () => {
+                        if (await dialog.confirm(`"${idea.title}" 아이디어를 삭제할까요? 삭제하면 되돌릴 수 없습니다.`, { title: '아이디어 삭제', confirmLabel: '삭제', danger: true }) && deleteIdea(idea.id)) {
                             if (editingId === idea.id) resetForm()
                         }
                     }}>삭제</button>

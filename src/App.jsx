@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { DocumentProvider } from './context/DocumentContext'
+import { DialogProvider } from './common/DialogProvider'
 import AppLayout from './layout/AppLayout'
 import DocumentPage from './pages/DocumentPage'
 import FavoritesPage from './pages/FavoritesPage'
@@ -12,11 +13,12 @@ import './App.css'
 function App() {
   return (
     <BrowserRouter>
+      <DialogProvider>
       <DocumentProvider>
         <Routes>
-          <Route path="invite/:code" element={<InvitePage />} />
           <Route element={<AppLayout />}>
             <Route index element={<HomePage />} />
+            <Route path="invite/:code" element={<InvitePage />} />
             <Route path="favorites" element={<FavoritesPage />} />
             <Route path="trash" element={<TrashPage />} />
             <Route path="documents/:documentId" element={<DocumentPage />} />
@@ -25,6 +27,7 @@ function App() {
           </Route>
         </Routes>
       </DocumentProvider>
+      </DialogProvider>
     </BrowserRouter>
   )
 }

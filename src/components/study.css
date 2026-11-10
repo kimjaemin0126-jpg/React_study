@@ -159,3 +159,109 @@ body:has(.calendar-panel) .study-panel {
     display: none;
   }
 }
+
+
+/* 권한 때문에 막힌 아이콘 버튼 */
+.icon-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.icon-button:disabled:hover {
+  background: transparent;
+}
+
+/* 공용 창 (확인, 알림, 입력) */
+.app-dialog {
+  width: min(360px, calc(100vw - 32px));
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+  box-shadow: var(--shadow);
+}
+
+.app-dialog h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-strong);
+}
+
+.app-dialog p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--subtle);
+  white-space: pre-line;
+}
+
+.app-dialog-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--canvas);
+  color: var(--text-strong);
+  font: inherit;
+  font-size: 14px;
+}
+
+.app-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.study-danger-button {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  background: var(--danger);
+  color: #fff;
+}
+
+.study-danger-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 팀원 패널: 권한 선택창 (기본 드롭다운 대신 둥근 선택창) */
+.study-role-select {
+  appearance: none;
+  padding: 4px 26px 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--canvas) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2369707d' stroke-width='1.5' fill='none'/%3E%3C/svg%3E") no-repeat right 10px center;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* 팀원 패널: 내보내기 아이콘 버튼 (마우스를 올리면 빨간색) */
+.study-remove {
+  color: var(--muted);
+}
+.study-remove:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* 팀원 패널: 스터디 닫기, 나가기 (테두리형 위험 버튼) */
+.study-danger-outline {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--danger);
+  font-size: 13px;
+  cursor: pointer;
+}
+.study-danger-outline:hover {
+  background: var(--danger-soft);
+}

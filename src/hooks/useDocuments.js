@@ -160,7 +160,7 @@ export function useDocuments() {
   }, [documents, updateDocument])
 
   const activeDocuments = useMemo(
-    () => documents.filter((document) => !document.isDeleted),
+    () => documents.filter((document) => !document.isDeleted && !document.studyLeft),
     [documents]
   )
 

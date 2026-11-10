@@ -1,3 +1,4 @@
+import { useDialog } from '../context/dialogContext'
 import { useEffect, useState } from 'react'
 import { Link2, Trash2, X } from 'lucide-react'
 import { studyApi } from '../services/studyApi'
@@ -14,7 +15,8 @@ async function fetchPanel(workspaceId) {
   return { myRole: study.me.role, members: memberList.members, invites: inviteList.invites }
 }
 
-export default function MembersPanel({ workspaceId, onClose, onClosed }) {
+export default function MembersPanel({ workspaceId, onClose, onClosed, onLeft }) {
+  const dialog = useDialog()
   const [myRole, setMyRole] = useState(null)
   const [members, setMembers] = useState([])
   const [invites, setInvites] = useState([])
@@ -97,6 +99,7 @@ export default function MembersPanel({ workspaceId, onClose, onClosed }) {
             <span className="study-member-name">{member.nickname}</span>
             {isOwner && member.role !== 'OWNER' ? (
               <select
+                className="study-role-select"
                 aria-label={`${member.nickname} 권한`}
                 value={member.role}
                 onChange={(event) => run(() => studyApi.changeRole(workspaceId, member.id, event.target.value))}
@@ -110,11 +113,11 @@ export default function MembersPanel({ workspaceId, onClose, onClosed }) {
             {isOwner && member.role !== 'OWNER' && (
               <button
                 type="button"
-                className="icon-button"
+                className="icon-button study-remove"
                 aria-label={`${member.nickname} 내보내기`}
                 title="내보내기"
-                onClick={() => {
-                  if (window.confirm(`${member.nickname}님을 내보낼까요?`)) {
+                onClick={async () => {
+                  if (await dialog.confirm(`${member.nickname}님을 내보낼까요?`, { title: '팀원 내보내기', confirmLabel: '내보내기', danger: true })) {
                     run(() => studyApi.removeMember(workspaceId, member.id))
                   }
                 }}
@@ -144,8 +147,8 @@ export default function MembersPanel({ workspaceId, onClose, onClosed }) {
                     <button
                       type="button"
                       className="study-secondary small"
-                      onClick={() => {
-                        if (window.confirm('이 초대 링크를 취소할까요?')) {
+                      onClick={async () => {
+                        if (await dialog.confirm('이 초대 링크를 취소할까요?', { title: '초대 취소', confirmLabel: '취소하기', danger: true })) {
                           run(() => studyApi.revokeInvite(workspaceId, invite.id))
                         }
                       }}
@@ -162,15 +165,31 @@ export default function MembersPanel({ workspaceId, onClose, onClosed }) {
         <section className="study-danger-section">
           <button
             type="button"
-            className="study-danger"
-            onClick={() => {
-              if (window.confirm('스터디를 닫을까요? 팀원 모두 들어갈 수 없게 되고, 초대 링크도 모두 취소돼요. 데이터는 보관돼요.')) {
+            className="study-danger-outline"
+            onClick={async () => {
+              if (await dialog.confirm('팀원 모두 들어갈 수 없게 되고, 초대 링크도 모두 취소돼요. 데이터는 보관돼요.', { title: '스터디 닫기', confirmLabel: '닫기', danger: true })) {
                 studyApi.closeStudy(workspaceId)
                   .then(() => onClosed?.())
                   .catch((err) => setError(err.message))
               }
             }}
           >스터디 닫기</button>
+        </section>
+      )}
+
+      {myRole && myRole !== 'OWNER' && (
+        <section className="study-danger-section">
+          <button
+            type="button"
+            className="study-danger-outline"
+            onClick={async () => {
+              if (await dialog.confirm('나간 뒤에는 새 초대 링크가 있어야 다시 들어올 수 있어요.', { title: '스터디 나가기', confirmLabel: '나가기', danger: true })) {
+                studyApi.leaveStudy(workspaceId)
+                  .then(() => onLeft?.())
+                  .catch((err) => setError(err.message))
+              }
+            }}
+          >스터디 나가기</button>
         </section>
       )}
 

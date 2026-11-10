@@ -1,3 +1,4 @@
+import { useDialog } from '../context/dialogContext'
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Header from './Header'
@@ -10,11 +11,15 @@ import { useCalendarPanel } from '../calendar/useCalendarPanel'
 import '../calendar/calendar.css'
 import { getDocumentTitle } from '../utils/documentUtils'
 import ChildPageModal from '../common/ChildPageModal'
+import MembersPanel from '../components/MembersPanel'
+import { studyApi } from '../services/studyApi'
 
 export default function AppLayout() {
+  const dialog = useDialog()
   const [templateOpen, setTemplateOpen] = useState(false)
   const [childParentId, setChildParentId] = useState(null)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [showMembers, setShowMembers] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const { documents, activeDocuments, createDocument, updateDocument, storageError } = useDocumentStore()
@@ -32,8 +37,27 @@ export default function AppLayout() {
   }
 
   function openChildPage(parentId) {
-  setMobileSidebarOpen(false)
-  setChildParentId(parentId)
+    setMobileSidebarOpen(false)
+    setChildParentId(parentId)
+  }
+
+  // 스터디 만들기: 방장 계정이 생기고, 지금 문서 내용을 서버에 한 번 올림
+  // (이후 편집 내용의 서버 동기화는 문서 화면에서 처리)
+  async function handleCreateStudy() {
+    if (!currentDocument) return
+    const nickname = (await dialog.prompt('스터디에서 사용할 닉네임을 입력해주세요.', { title: '스터디 만들기', placeholder: '닉네임 (1~20자)', maxLength: 20, confirmLabel: '만들기' }))?.trim()
+    if (!nickname) return
+
+    const name = getDocumentTitle(currentDocument).slice(0, 50)
+    try {
+      const { workspace } = await studyApi.createStudy(name, nickname.slice(0, 20))
+      await studyApi.saveDocument(workspace.id, { title: name, blocks: currentDocument.blocks })
+      updateDocument(currentDocument.id, { workspaceId: workspace.id })
+      setMobileSidebarOpen(false)
+      setShowMembers(true)
+    } catch (err) {
+      await dialog.alert(err.message, { title: '스터디를 만들 수 없어요' })
+    }
   }
 
   return (
@@ -43,13 +67,19 @@ export default function AppLayout() {
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
         onNewPage={() => setTemplateOpen(true)}
-        onNewChild={openChildPage}    
-        />
+        onNewChild={openChildPage}
+      />
       <div className="main-column">
-        <Header onOpenSidebar={() => setMobileSidebarOpen(true)} onToggleCalendar={calendar.toggle} />
+        <Header onOpenSidebar={() => setMobileSidebarOpen(true)} />
         {storageError && <div className="storage-alert" role="alert">{storageError}</div>}
         <main className="main-content">
-          <Outlet context={{ openChildPage }} />
+          <Outlet context={{
+            openChildPage,
+            handleCreateStudy,
+            toggleMembers: () => setShowMembers((value) => !value),
+            toggleCalendar: calendar.toggle,
+            calendarOpen: calendar.isOpen,
+          }} />
         </main>
 
         {calendar.isOpen && (currentDocument ? (
@@ -63,6 +93,19 @@ export default function AppLayout() {
           <WorkspaceCalendarPanel documents={activeDocuments} calendar={calendar} />
         ))}
       </div>
+      {showMembers && currentDocument?.workspaceId && (
+        <MembersPanel
+          workspaceId={currentDocument.workspaceId}
+          onClose={() => setShowMembers(false)}
+          onClosed={() => setShowMembers(false)}
+          onLeft={() => {
+            // 나간 스터디 문서는 목록에서 숨김 (문서 자체는 이 기기에 남김)
+            updateDocument(currentDocument.id, { studyLeft: true })
+            setShowMembers(false)
+            navigate('/')
+          }}
+        />
+      )}
       {templateOpen && (
         <TemplateSelector
           onClose={() => setTemplateOpen(false)}

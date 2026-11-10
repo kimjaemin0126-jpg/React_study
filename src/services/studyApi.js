@@ -34,6 +34,7 @@ export const studyApi = {
   revokeInvite: (workspaceId, inviteId) => request('DELETE', `/workspaces/${workspaceId}/invites/${inviteId}`),
 
   closeStudy: (workspaceId) => request('POST', `/workspaces/${workspaceId}/close`),
+  leaveStudy: (workspaceId) => request('POST', `/workspaces/${workspaceId}/leave`),
 
   acceptInvite: (code, nickname) => request('POST', `/invites/${code}/accept`, { nickname })
 }
