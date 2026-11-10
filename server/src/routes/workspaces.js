@@ -1,8 +1,9 @@
 import { Router } from 'express'
 import { prisma } from '../db.js'
+import { INVITE_EXPIRES_HOURS, INVITE_MAX_USES } from '../config.js'
 import { requireEditor, requireMember, requireOwner } from '../middleware/auth.js'
 import { sanitizeBlocks } from '../utils/document.js'
-import { setMemberCookie } from '../utils/cookie.js'
+import { memberCookieName, setMemberCookie } from '../utils/cookie.js'
 import { generateToken, hashToken } from '../utils/token.js'
 
 export const workspacesRouter = Router()
@@ -165,6 +166,19 @@ workspacesRouter.post('/:workspaceId/close', requireMember, requireOwner, async 
   res.json({ closed: { id: workspaceId, closedAt: now } })
 })
 
+// POST /api/workspaces/:workspaceId/leave : 스터디에서 나가기 (이 기기 신분도 함께 사라짐)
+// 방장은 나갈 수 없음 (스터디를 닫아야 함)
+workspacesRouter.post('/:workspaceId/leave', requireMember, async (req, res) => {
+  const me = req.member
+  if (me.role === 'OWNER') {
+    return res.status(400).json({ error: '방장은 나갈 수 없어요. 스터디를 닫아 주세요.' })
+  }
+
+  await prisma.member.update({ where: { id: me.id }, data: { removedAt: new Date() } })
+  res.clearCookie(memberCookieName(req.params.workspaceId), { path: '/' })
+  res.json({ left: { id: me.id, nickname: me.nickname } })
+})
+
 // GET /api/workspaces/:workspaceId/invites : 초대 링크 목록 (방장만, 원문 코드는 제외)
 workspacesRouter.get('/:workspaceId/invites', requireMember, requireOwner, async (req, res) => {
   const invites = await prisma.invite.findMany({
@@ -181,21 +195,15 @@ workspacesRouter.post('/:workspaceId/invites', requireMember, requireOwner, asyn
   const me = req.member
 
   const role = req.body?.role ?? 'VIEWER'
-  const expiresInHours = req.body?.expiresInHours ?? 24
-  const maxUses = req.body?.maxUses ?? null
 
   if (!GRANTABLE_ROLES.includes(role)) {
     return res.status(400).json({ error: '권한은 EDITOR 또는 VIEWER만 선택할 수 있습니다.' })
   }
-  if (!Number.isInteger(expiresInHours) || expiresInHours < 1 || expiresInHours > 168) {
-    return res.status(400).json({ error: '만료 시간은 1~168시간 사이로 입력해주세요.' })
-  }
-  if (maxUses !== null && (!Number.isInteger(maxUses) || maxUses < 1 || maxUses > 100)) {
-    return res.status(400).json({ error: '최대 사용 횟수는 1~100 사이로 입력해주세요.' })
-  }
 
+  // 기간과 인원은 서버 설정값으로 고정 (화면에서 보내도 무시)
+  const maxUses = INVITE_MAX_USES
   const code = generateToken()
-  const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000)
+  const expiresAt = new Date(Date.now() + INVITE_EXPIRES_HOURS * 60 * 60 * 1000)
 
   const invite = await prisma.invite.create({
     data: {

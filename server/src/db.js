@@ -1,6 +1,2 @@
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
-import { PrismaClient } from './generated/prisma/client.ts'
-
-const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL })
-
-export const prisma = new PrismaClient({ adapter })
+// 저장소 진입점 (메모리 저장소로 교체됨, DB 파일 없음)
+export { store as prisma } from './store.js'

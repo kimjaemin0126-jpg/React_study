@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { prisma } from '../db.js'
+import { STUDY_MAX_MEMBERS } from '../config.js'
 import { setMemberCookie } from '../utils/cookie.js'
 import { generateToken, hashToken } from '../utils/token.js'
 
@@ -21,6 +22,12 @@ invitesRouter.post('/:code/accept', async (req, res) => {
 
     const workspace = await tx.workspace.findUnique({ where: { id: invite.workspaceId } })
     if (workspace.closedAt) return { status: 410, body: { error: '닫힌 스터디입니다.' } }
+
+    // 스터디 전체 인원 확인 (방장 포함, 나가거나 내보낸 멤버는 제외)
+    const activeCount = await tx.member.count({ where: { workspaceId: invite.workspaceId, removedAt: null } })
+    if (activeCount >= STUDY_MAX_MEMBERS) {
+      return { status: 409, body: { error: `스터디 인원이 가득 찼어요. (최대 ${STUDY_MAX_MEMBERS}명)` } }
+    }
 
     if (invite.revokedAt) return { status: 410, body: { error: '취소된 초대 링크입니다.' } }
     if (invite.expiresAt <= new Date()) return { status: 410, body: { error: '만료된 초대 링크입니다.' } }
