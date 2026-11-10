@@ -5,92 +5,91 @@ import TaskBoard from './TaskBoard'
 import './TaskViews.css'
 
 const viewTypes = [
-  { id: 'board', label: '▥ 보드 보기' },
-  { id: 'feed', label: '▤ 피드' },
-  { id: 'timeline', label: '▦ 타임라인' },
+    { id: 'board', label: '▥ 보드 보기' },
+    { id: 'feed', label: '▤ 피드' },
+    { id: 'timeline', label: '▦ 타임라인' },
 ]
 
 const statuses = [
-  { id: 'todo', label: '시작 전' },
-  { id: 'doing', label: '진행 중' },
-  { id: 'done', label: '완료' },
+    { id: 'todo', label: '시작 전' },
+    { id: 'doing', label: '진행 중' },
+    { id: 'done', label: '완료' },
 ]
 
 // 날짜를 YYYY-MM-DD 문자열로 변환
 function toDateKey(date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
 
-  return `${year}-${month}-${day}`
+    return `${year}-${month}-${day}`
 }
 
 // 피드와 타임라인에서 함께 사용하는 상태·날짜 입력
 function TaskFields({ task, updateDocument }) {
-  return (
-    <div className="task-views-fields">
-      <label>
-        상태
-        <select
-          value={task.taskStatus ?? 'todo'}
-          onChange={(event) =>
-            updateDocument(task.id, {
-              taskStatus: event.target.value,
-            })
-          }
-        >
-          {statuses.map((status) => (
-            <option key={status.id} value={status.id}>
-              {status.label}
-            </option>
-          ))}
-        </select>
-      </label>
+    return (
+        <div className="task-views-fields">
+        <label>
+            상태
+            <select
+            value={task.taskStatus ?? 'todo'}
+            onChange={(event) =>
+                updateDocument(task.id, {
+                taskStatus: event.target.value,
+                })
+            }
+            >
+            {statuses.map((status) => (
+                <option key={status.id} value={status.id}>
+                {status.label}
+                </option>
+            ))}
+            </select>
+        </label>
 
-      <label>
-        시작일
-        <input
-          type="date"
-          value={task.startDate || ''}
-          onChange={(event) => {
-            const next = event.target.value
+        <label>
+            시작일
+            <input
+            type="date"
+            value={task.startDate || ''}
+            onChange={(event) => {
+                const next = event.target.value
 
-            updateDocument(task.id, {
-              startDate: next || null,
+                updateDocument(task.id, {
+                startDate: next || null,
 
-              // 시작일이 종료일보다 뒤라면 종료일도 함께 이동
-              endDate: next
-                ? (
-                    !task.endDate || task.endDate < next
-                      ? next
-                      : task.endDate
-                  )
-                : null,
-            })
-          }}
-        />
-      </label>
+                endDate: next
+                    ? (
+                        !task.endDate || task.endDate < next
+                        ? next
+                        : task.endDate
+                    )
+                    : null,
+                })
+            }}
+            />
+        </label>
 
-      <label>
-        종료일
-        <input
-          type="date"
-          value={task.endDate || ''}
-          min={task.startDate || undefined}
-          disabled={!task.startDate}
-          onChange={(event) => {
-            const next = event.target.value
+        <label>
+            종료일
+            <input
+            type="date"
+            value={task.endDate || ''}
+            min={task.startDate || undefined}
+            disabled={!task.startDate}
+            onChange={(event) => {
+                const next = event.target.value
 
-            if (next && next < task.startDate) return
+                if (next && next < task.startDate) return
 
-            updateDocument(task.id, {
-              endDate: next || null,
-            })
-          }}
-        />
-      </label>
-    </div>
-  )
+                updateDocument(task.id, {
+                endDate: next || null,
+                })
+            }}
+            />
+        </label>
+        </div>
+    )
 }
 
 function FeedView({ tasks, updateDocument }) {

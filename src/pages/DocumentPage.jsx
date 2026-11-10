@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { ChevronRight, Copy, Download, FilePlus2, FileText, MoreHorizontal, Star, Trash2, UserPlus, Users } from 'lucide-react'
 import DocumentEditor from '../editor/DocumentEditor'
 import { createBlock } from '../editor/blockTypes'
@@ -18,7 +18,8 @@ function denyAccess(err) {
 export default function DocumentPage() {
   const { documentId } = useParams()
   const navigate = useNavigate()
-  const { documents, activeDocuments, updateDocument, moveToTrash, duplicateDocument, moveDocument, createDocument } = useDocumentStore()
+  const { openChildPage } = useOutletContext()
+  const { documents, activeDocuments, updateDocument, moveToTrash, duplicateDocument, moveDocument } = useDocumentStore()
   const [showMembers, setShowMembers] = useState(false)
   const current = documents.find((document) => document.id === documentId && !document.isDeleted)
   const ancestry = useMemo(() => {
@@ -170,10 +171,7 @@ export default function DocumentPage() {
         <DocumentEditor blocks={current.blocks} onChange={(blocks) => updateDocument(current.id, { blocks })} />
       </div>
       <section className="child-pages">
-        <div className="child-pages-heading"><h2>하위 페이지</h2><button type="button" className="text-action" onClick={() => {
-          const childId = createDocument('blank', current.id)
-          navigate(`/documents/${childId}`)
-        }}><FilePlus2 size={15} />페이지 추가</button></div>
+        <div className="child-pages-heading"><h2>하위 페이지</h2><button type="button" className="text-action" onClick={() => openChildPage(current.id)}><FilePlus2 size={15} />페이지 추가</button></div>
         {children.length ? children.map((child) => <Link to={`/documents/${child.id}`} key={child.id} className="child-page-link"><FileText size={16} /><span>{getDocumentTitle(child)}</span><ChevronRight size={16} /></Link>) : <p className="child-empty">이 페이지에 연결된 하위 페이지가 없습니다.</p>}
       </section>
       {showMembers && current.workspaceId && (
