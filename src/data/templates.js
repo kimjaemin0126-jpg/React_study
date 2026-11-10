@@ -7,7 +7,6 @@ const block = (type, content = '', checked = false) => ({
   checked
 })
 
-// 오늘 날짜: 2026.11.10 (화)
 function today() {
   const d = new Date()
   const days = ['일', '월', '화', '수', '목', '금', '토']
