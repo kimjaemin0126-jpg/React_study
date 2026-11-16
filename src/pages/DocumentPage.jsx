@@ -14,12 +14,13 @@ import { exportDocumentToPdf } from '../utils/exportPdf'
 function denyAccess(err, showAlert) {
   if (err.status === 401 || err.status === 403) showAlert('이 스터디에서 나가게 되어 문서를 열 수 없어요.', { title: '문서를 열 수 없어요' })
 }
+import DocumentSchedule from '../calendar/DocumentSchedule'
 
 export default function DocumentPage() {
   const dialog = useDialog()
   const { documentId } = useParams()
   const navigate = useNavigate()
-  const { openChildPage, handleCreateStudy, toggleMembers, toggleCalendar, calendarOpen } = useOutletContext()
+  const { openChildPage, calendar, handleCreateStudy, toggleMembers } = useOutletContext()
   const { documents, activeDocuments, updateDocument, moveToTrash, duplicateDocument, moveDocument } = useDocumentStore()
   const current = documents.find((document) => document.id === documentId && !document.isDeleted)
   const ancestry = useMemo(() => {
@@ -129,7 +130,7 @@ export default function DocumentPage() {
   return (
     <article className="document-page">
       <div className="document-breadcrumb">
-        <Link to="/">모든 문서</Link>
+        <Link to="/documents">모든 문서</Link>
         {ancestry.map((parent) => <span key={parent.id} className="breadcrumb-parent"><ChevronRight size={14} /><Link to={`/documents/${parent.id}`}>{getDocumentTitle(parent)}</Link></span>)}
         <span><ChevronRight size={14} />{getDocumentTitle(current)}</span>
         <div className="document-actions">
@@ -139,7 +140,14 @@ export default function DocumentPage() {
           ) : (
             <button type="button" className="icon-button" title="스터디 만들기" aria-label="스터디 만들기" onClick={handleCreateStudy}><UserPlus size={16} /></button>
           )}
-          <button type="button" className={`icon-button ${calendarOpen ? 'is-active' : ''}`} title="캘린더" aria-label="캘린더" onClick={toggleCalendar}><CalendarDays size={16} /></button>
+          <button
+            type="button"
+            className={`icon-button${calendar.isOpen ? ' is-active' : ''}`}
+            title={calendar.isOpen ? '이 문서의 캘린더 닫기' : '이 문서의 캘린더 열기'}
+            aria-label={calendar.isOpen ? '이 문서의 캘린더 닫기' : '이 문서의 캘린더 열기'}
+            aria-expanded={calendar.isOpen}
+            onClick={calendar.toggle}
+          ><CalendarDays size={17} /></button>
           <button type="button" disabled={viewerOnly} className="icon-button" title={viewerOnly ? viewerHint : "PDF로 내보내기"} aria-label="PDF로 내보내기" onClick={() => exportDocumentToPdf(current)}><Download size={16} /></button>
           <button type="button" disabled={viewerOnly} className="icon-button" title={viewerOnly ? viewerHint : "문서 복제"} aria-label="문서 복제" onClick={() => {
             const copyId = duplicateDocument(current.id)
@@ -168,8 +176,9 @@ export default function DocumentPage() {
       {access?.myRole === 'VIEWER' && <p className="study-warning">보기 전용 문서예요. 편집은 방장이나 편집자만 할 수 있어요.</p>}
       {syncError && <p className="study-error" role="alert">서버에 저장하지 못했어요: {syncError}</p>}
       <div inert={inert}>
-        <input className="document-title-input" value={current.title} placeholder="제목 없음" onChange={(event) => changeTitle(event.target.value)} aria-label="문서 제목" />
-        <div className="document-subtitle">{current.title.trim() ? '나만의 생각과 지식을 정리해 보세요.' : '제목 없음'}</div>
+      <input className="document-title-input" value={current.title} placeholder="제목 없음" onChange={(event) => changeTitle(event.target.value)} aria-label="문서 제목" />
+      <div className="document-subtitle">{current.title.trim() ? '나만의 생각과 지식을 정리해 보세요.' : '제목 없음'}</div>
+      <DocumentSchedule events={current.events ?? []} onOpen={calendar.open} />
         <DocumentEditor blocks={current.blocks} onChange={(blocks) => updateDocument(current.id, { blocks })} />
       </div>
       <section className="child-pages">

@@ -9,24 +9,30 @@ import InvitePage from './pages/InvitePage'
 import NotFoundPage from './pages/NotFoundPage'
 import TrashPage from './pages/TrashPage'
 import './App.css'
+import TasksPage from './pages/TasksPage'
+import IdeaPage from './pages/IdeaPage'
+import AllDocumentPage from './pages/AllDocumentPage'
 
 function App() {
   return (
     <BrowserRouter>
       <DialogProvider>
-      <DocumentProvider>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route index element={<HomePage />} />
-            <Route path="invite/:code" element={<InvitePage />} />
-            <Route path="favorites" element={<FavoritesPage />} />
-            <Route path="trash" element={<TrashPage />} />
-            <Route path="documents/:documentId" element={<DocumentPage />} />
-            <Route path="404" element={<NotFoundPage />} />
-            <Route path="*" element={<Navigate to="/404" replace />} />
-          </Route>
-        </Routes>
-      </DocumentProvider>
+        <DocumentProvider>
+          <Routes>
+            <Route element={<AppLayout />}>
+              <Route index element={<HomePage />} />
+              <Route path="invite/:code" element={<InvitePage />} />
+              <Route path="tasks" element={<TasksPage />} />
+              <Route path="ideas" element={<IdeaPage />} />
+              <Route path="documents" element={<AllDocumentPage />} />
+              <Route path="favorites" element={<FavoritesPage />} />
+              <Route path="trash" element={<TrashPage />} />
+              <Route path="documents/:documentId" element={<DocumentPage />} />
+              <Route path="404" element={<NotFoundPage />} />
+              <Route path="*" element={<Navigate to="/404" replace />} />
+            </Route>
+          </Routes>
+        </DocumentProvider>
       </DialogProvider>
     </BrowserRouter>
   )

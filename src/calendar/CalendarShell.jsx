@@ -3,7 +3,13 @@ import { WEEKDAYS, buildMonthGrid, formatDateLabel, formatMonthLabel, getTodayKe
 
 // 문서별 캘린더와 전체 일정 캘린더가 함께 쓰는 틀 (제목, 월 이동, 달력)
 export default function CalendarShell({ title, subtitle, events, calendar, onPickDate, children }) {
-  const { selectedDate, visibleMonth, setVisibleMonth, close } = calendar
+  const {
+    selectedDate,
+    visibleMonth,
+    setVisibleMonth,
+    close,
+    isPinned = false,
+  } = calendar
   const todayKey = getTodayKey()
   const eventCounts = {}
   events.forEach((event) => {
@@ -12,14 +18,24 @@ export default function CalendarShell({ title, subtitle, events, calendar, onPic
 
   return (
     <aside className="calendar-panel" aria-label={title} onKeyDown={(event) => {
-      if (event.key === 'Escape') close()
+      if (event.key === 'Escape' && !isPinned) close()
     }}>
       <div className="calendar-panel-heading">
         <div>
           <h2>{title}</h2>
           <p>{subtitle}</p>
         </div>
-        <button type="button" className="icon-button" aria-label="캘린더 닫기" title="캘린더 닫기" onClick={close}><X size={17} /></button>
+          {!isPinned && (
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="캘린더 닫기"
+              title="캘린더 닫기"
+              onClick={close}
+            >
+              <X size={17} />
+            </button>
+          )}
       </div>
 
       <div className="calendar-month-nav">

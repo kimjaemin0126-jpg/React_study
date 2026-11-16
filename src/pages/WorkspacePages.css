@@ -1,0 +1,14 @@
+.workspace-page {
+    width: 100%;
+    max-width: 960px;
+    min-width: 0;
+    margin: 0 auto;
+}
+
+/* 각 컴포넌트의 기존 최대 너비 대신 페이지 너비 사용 */
+.workspace-page > .task-views,
+.workspace-page > .idea-board {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}

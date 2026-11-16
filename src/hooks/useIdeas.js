@@ -23,10 +23,10 @@ export function useIdeas() {
     }
   }
 
-  function addIdea(title, content) {
+  function addIdea(title, content, sectionId) {
     const now = new Date().toISOString()
     return commit([...store.ideas, {
-      id: createId(), title: title.trim(), content: content.trim(), createdAt: now, updatedAt: now,
+      id: createId(), sectionId, title: title.trim(), content: content.trim(), createdAt: now, updatedAt: now,
     }])
   }
 

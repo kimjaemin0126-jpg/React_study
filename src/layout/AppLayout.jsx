@@ -1,33 +1,37 @@
-import { useDialog } from '../context/dialogContext'
 import { useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useMatch, useNavigate } from 'react-router-dom'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import { useDocumentStore } from '../hooks/useDocumentStore'
+import { useDialog } from '../context/dialogContext'
 import TemplateSelector from '../common/TemplateSelector'
-import CalendarPanel from '../calendar/CalendarPanel'
-import WorkspaceCalendarPanel from '../calendar/WorkspaceCalendarPanel'
+import ChildPageModal from '../common/ChildPageModal'
+import CalendarContent from '../calendar/CalendarContent'
 import { useCalendarPanel } from '../calendar/useCalendarPanel'
 import '../calendar/calendar.css'
-import { getDocumentTitle } from '../utils/documentUtils'
-import ChildPageModal from '../common/ChildPageModal'
 import MembersPanel from '../components/MembersPanel'
 import { studyApi } from '../services/studyApi'
+import { getDocumentTitle } from '../utils/documentUtils'
 
 export default function AppLayout() {
-  const dialog = useDialog()
   const [templateOpen, setTemplateOpen] = useState(false)
   const [childParentId, setChildParentId] = useState(null)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [showMembers, setShowMembers] = useState(false)
   const navigate = useNavigate()
-  const location = useLocation()
-  const { documents, activeDocuments, createDocument, updateDocument, storageError } = useDocumentStore()
+  const dialog = useDialog()
   const calendar = useCalendarPanel()
-
-  // 문서 화면에서는 그 문서의 일정을, 나머지 화면에서는 전체 일정을 보여줌
-  const documentId = location.pathname.match(/^\/documents\/([^/]+)/)?.[1]
-  const currentDocument = documents.find((document) => document.id === documentId && !document.isDeleted)
+  const documentMatch = useMatch('/documents/:documentId')
+  const tasksMatch = useMatch('/tasks')
+  const displayedCalendar = {
+    ...calendar,
+    isOpen: Boolean(tasksMatch) || (Boolean(documentMatch) && calendar.isOpen),
+    isPinned: Boolean(tasksMatch),
+  }
+  const { documents, activeDocuments, createDocument, updateDocument, storageError } = useDocumentStore()
+  const currentDocument = documentMatch
+    ? documents.find((document) => document.id === documentMatch.params.documentId && !document.isDeleted)
+    : undefined
 
   function createFromTemplate(templateId, parentId = null) {
     const id = createDocument(templateId, parentId)
@@ -42,7 +46,6 @@ export default function AppLayout() {
   }
 
   // 스터디 만들기: 방장 계정이 생기고, 지금 문서 내용을 서버에 한 번 올림
-  // (이후 편집 내용의 서버 동기화는 문서 화면에서 처리)
   async function handleCreateStudy() {
     if (!currentDocument) return
     const nickname = (await dialog.prompt('스터디에서 사용할 닉네임을 입력해주세요.', { title: '스터디 만들기', placeholder: '닉네임 (1~20자)', maxLength: 20, confirmLabel: '만들기' }))?.trim()
@@ -75,24 +78,23 @@ export default function AppLayout() {
         <main className="main-content">
           <Outlet context={{
             openChildPage,
+            openNewPage: () => setTemplateOpen(true),
+            calendar: displayedCalendar,
             handleCreateStudy,
             toggleMembers: () => setShowMembers((value) => !value),
             toggleCalendar: calendar.toggle,
-            calendarOpen: calendar.isOpen,
+            calendarOpen: displayedCalendar.isOpen,
           }} />
-        </main>
 
-        {calendar.isOpen && (currentDocument ? (
-          <CalendarPanel
-            documentTitle={getDocumentTitle(currentDocument)}
-            events={currentDocument.events ?? []}
-            onChange={(events) => updateDocument(currentDocument.id, { events })}
-            calendar={calendar}
+          <CalendarContent
+            documentId={documentMatch?.params.documentId}
+            documents={activeDocuments}
+            updateDocument={updateDocument}
+            calendar={displayedCalendar}
           />
-        ) : (
-          <WorkspaceCalendarPanel documents={activeDocuments} calendar={calendar} />
-        ))}
+        </main>
       </div>
+
       {showMembers && currentDocument?.workspaceId && (
         <MembersPanel
           workspaceId={currentDocument.workspaceId}

@@ -346,3 +346,12 @@
   color: var(--muted);
   font-size: 11px;
 }
+
+.calendar-period-note {
+  padding: 8px;
+  border-radius: 6px;
+  color: var(--subtle);
+  background: var(--focus-soft);
+  font-size: 12px;
+  line-height: 1.6;
+}

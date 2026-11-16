@@ -1,4 +1,4 @@
-import { createId } from '../utils/documentUtils'
+import { createId } from '../utils/documentUtils.js'
 
 export const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -68,4 +68,35 @@ export function collectEvents(documents) {
     documentId: document.id,
     documentTitle: document.title.trim() || '제목 없음'
   })))
+}
+
+// 문서별 events와 보드의 기간을 조회할 때만 합칩니다. 원본 데이터는 바꾸지 않습니다.
+export function collectCalendarEntries(documents) {
+  const active = documents.filter((document) => !document.isDeleted)
+  const events = collectEvents(active).map((event) => ({
+    ...event,
+    id: `${event.documentId}:event:${event.id}`,
+    time: event.time || '',
+    endDate: event.date,
+    kind: 'event',
+  }))
+  const periods = active.filter((document) => document.isTask && document.startDate).map((document) => ({
+    id: `${document.id}:period`,
+    documentId: document.id,
+    documentTitle: document.title.trim() || '제목 없음',
+    title: document.title.trim() || '제목 없음',
+    date: document.startDate,
+    endDate: document.endDate && document.endDate >= document.startDate ? document.endDate : document.startDate,
+    time: '',
+    kind: 'period',
+  }))
+  return sortEvents([...events, ...periods])
+}
+
+export function entriesOnDate(entries, date) {
+  return entries.filter((entry) => entry.date <= date && date <= (entry.endDate || entry.date))
+}
+
+export function calendarMarkers(entries, month) {
+  return buildMonthGrid(month).flatMap(({ key }) => entriesOnDate(entries, key).map(() => ({ date: key })))
 }

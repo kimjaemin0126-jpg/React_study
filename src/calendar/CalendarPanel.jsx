@@ -2,14 +2,17 @@ import { useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import CalendarShell from './CalendarShell'
 import EventForm from './EventForm'
-import { createEvent, formatDateLabel, sortEvents } from './calendarUtils'
+import { calendarMarkers, collectCalendarEntries, createEvent, entriesOnDate, formatDateLabel, sortEvents } from './calendarUtils'
 
 // 문서 안에서 여는 캘린더: 현재 문서의 일정을 보고 추가·수정·삭제한다.
-export default function CalendarPanel({ documentTitle, events, onChange, calendar }) {
+export default function CalendarPanel({ documentTitle, events, onChange, calendar, taskPeriod = null }) {
   const [editingId, setEditingId] = useState(null)
-  const { selectedDate, selectDate } = calendar
+  const { selectedDate, visibleMonth, selectDate } = calendar
   const dayEvents = sortEvents(events.filter((event) => event.date === selectedDate))
   const editingEvent = dayEvents.find((event) => event.id === editingId)
+  const periods = taskPeriod ? collectCalendarEntries([{ ...taskPeriod, events: [] }]) : []
+  const selectedPeriods = entriesOnDate(periods, selectedDate)
+  const markers = calendarMarkers([...events, ...periods], visibleMonth)
 
   function pickDate(key) {
     setEditingId(null)
@@ -32,10 +35,13 @@ export default function CalendarPanel({ documentTitle, events, onChange, calenda
   }
 
   return (
-    <CalendarShell title="일정" subtitle={documentTitle} events={events} calendar={calendar} onPickDate={pickDate}>
+    <CalendarShell title="이 문서의 일정" subtitle={documentTitle} events={markers} calendar={calendar} onPickDate={pickDate}>
       <section className="calendar-day-detail">
         <h3>{formatDateLabel(selectedDate)}</h3>
-        {dayEvents.length === 0 && <p className="calendar-empty">등록된 일정이 없습니다.</p>}
+        {selectedPeriods.map((period) => (
+          <p key={period.id} className="calendar-period-note">보드 일정 기간: {period.date} ~ {period.endDate}</p>
+        ))}
+        {dayEvents.length === 0 && <p className="calendar-empty">이 날짜에 등록된 문서 일정이 없습니다.</p>}
         {dayEvents.length > 0 && (
           <ul className="calendar-event-list">
             {dayEvents.map((event) => (
@@ -50,7 +56,7 @@ export default function CalendarPanel({ documentTitle, events, onChange, calenda
         )}
         {editingEvent
           ? <EventForm key={editingEvent.id} event={editingEvent} date={selectedDate} onSubmit={saveEvent} onCancel={() => setEditingId(null)} />
-          : <EventForm date={selectedDate} onSubmit={addEvent} />}
+          : <EventForm key={`new-${selectedDate}`} date={selectedDate} onSubmit={addEvent} />}
       </section>
     </CalendarShell>
   )

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useOutletContext } from 'react-router-dom'
+import { getTodayKey, shiftMonth, toDateKey } from '../calendar/calendarUtils'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import TaskBoard from './TaskBoard'
 import './TaskViews.css'
@@ -16,16 +17,6 @@ const statuses = [
     { id: 'done', label: '완료' },
 ]
 
-// 날짜를 YYYY-MM-DD 문자열로 변환
-function toDateKey(date) {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-
-    return `${year}-${month}-${day}`
-}
-
-// 피드와 타임라인에서 함께 사용하는 상태·날짜 입력
 function TaskFields({ task, updateDocument }) {
     return (
         <div className="task-views-fields">
@@ -131,11 +122,9 @@ function FeedView({ tasks, updateDocument }) {
     )
 }
 
-function TimelineView({ tasks, updateDocument }) {
-    const [viewMonth, setViewMonth] = useState(() => new Date())
-
-    const year = viewMonth.getFullYear()
-    const month = viewMonth.getMonth()
+function TimelineView({ tasks, updateDocument, calendar}) {
+    const { visibleMonth, setVisibleMonth, selectDate } = calendar
+    const { year, month } = visibleMonth
     const lastDay = new Date(year, month + 1, 0).getDate()
 
     const days = Array.from(
@@ -159,7 +148,7 @@ function TimelineView({ tasks, updateDocument }) {
     })
 
     function changeMonth(offset) {
-        setViewMonth(new Date(year, month + offset, 1))
+        setVisibleMonth((current) => shiftMonth(current, offset))
     }
 
     return (
@@ -176,7 +165,7 @@ function TimelineView({ tasks, updateDocument }) {
                 ‹
             </button>
 
-            <button type="button" onClick={() => setViewMonth(new Date())}>
+            <button type="button" onClick={() => selectDate(getTodayKey())}>
                 오늘
             </button>
 
@@ -304,6 +293,7 @@ function TimelineView({ tasks, updateDocument }) {
     }
 
 export default function TaskViews() {
+    const { calendar } = useOutletContext()
     const { activeDocuments, updateDocument } = useDocumentStore()
 
     // 하나의 일정 데이터를 모든 보기에서 함께 사용
@@ -391,7 +381,7 @@ export default function TaskViews() {
 
         {views.includes('timeline') && (
             <div hidden={activeView !== 'timeline'}>
-            <TimelineView tasks={tasks} updateDocument={updateDocument} />
+            <TimelineView tasks={tasks} updateDocument={updateDocument} calendar={calendar} />
             </div>
         )}
         </section>

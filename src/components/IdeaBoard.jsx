@@ -1,17 +1,18 @@
 import { useDialog } from '../context/dialogContext'
-import { useRef, useState } from 'react'
-import { useIdeas } from '../hooks/useIdeas'
+import { useId, useRef, useState } from 'react'
 import './IdeaBoard.css'
 import Modal from '../common/Modal'
 
-export default function IdeaBoard() {
+export default function IdeaBoard({
+    section, ideas, error, readable, addIdea, updateIdea, deleteIdea, onRenameSection,
+}) {
+  const dialog = useDialog()
     const [title, setTitle] = useState('')
     const [content, setContent] = useState('')
     const [editingId, setEditingId] = useState(null)
     const [formOpen, setFormOpen] = useState(false)
-    const { ideas, error, readable, addIdea, updateIdea, deleteIdea } = useIdeas()
-  const dialog = useDialog()
     const sliderRef = useRef(null)
+    const sliderId = useId()
 
 function resetForm() {
     setTitle('')
@@ -33,7 +34,7 @@ function submitIdea(event) {
     if (!title.trim()) return
     const saved = editingId
         ? updateIdea(editingId, title, content)
-        : addIdea(title, content)
+        : addIdea(title, content, section.id)
     if (!saved) return
     const added = !editingId
     resetForm()
@@ -63,9 +64,16 @@ function scrollCards(direction) {
 }
 
 return (
-    <section className="idea-board" aria-labelledby="idea-board-title">
+    <section className="idea-board" aria-label={section.title || '아이디어 섹션'}>
         <div className="idea-board-heading">
-            <h2 id="idea-board-title">아이디어 보드</h2>
+            <input
+                className="idea-section-title"
+                aria-label="섹션 제목"
+                placeholder="섹션 제목을 입력하세요"
+                value={section.title}
+                onChange={(event) => onRenameSection(section.id, event.target.value)}
+                disabled={!readable}
+            />
             <span aria-live="polite">{ideas.length}개의 아이디어</span>
         </div>
 
@@ -125,7 +133,6 @@ return (
     </form>
 </Modal>
 )}
-    {error && <p className="idea-board-error" role="alert">{error}</p>}
 
     {ideas.length === 0 ? (
         <p className="idea-board-empty">
@@ -135,10 +142,10 @@ return (
         <>
         <div className="idea-board-slide-controls">
             <span>옆으로 넘겨 아이디어를 확인하세요.</span>
-            <button type="button" aria-label="이전 아이디어" aria-controls="idea-board-slider" onClick={() => scrollCards(-1)}>‹</button>
-            <button type="button" aria-label="다음 아이디어" aria-controls="idea-board-slider" onClick={() => scrollCards(1)}>›</button>
+            <button type="button" aria-label="이전 아이디어" aria-controls={sliderId} onClick={() => scrollCards(-1)}>‹</button>
+            <button type="button" aria-label="다음 아이디어" aria-controls={sliderId} onClick={() => scrollCards(1)}>›</button>
         </div>
-        <div className="idea-board-grid" id="idea-board-slider" ref={sliderRef} role="region" aria-label="아이디어 카드 목록, 가로 스크롤 가능" tabIndex={0}>
+        <div className="idea-board-grid" id={sliderId} ref={sliderRef} role="region" aria-label="아이디어 카드 목록, 가로 스크롤 가능" tabIndex={0}>
             {ideas.map((idea) => (
                 <article
                 key={idea.id}
