@@ -63,6 +63,30 @@
     background: var(--surface);
 }
 
+.task-views-timeline-filters {
+    display: flex;
+    gap: 6px;
+    margin: 0 0 14px;
+}
+
+.task-views-timeline-filters button {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--subtle);
+    background: var(--surface);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.task-views-timeline-filters button[aria-pressed="true"] {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--focus-soft);
+    font-weight: 600;
+}
+
 .task-views-picker p {
     color: var(--subtle);
     font-size: 13px;
@@ -250,6 +274,19 @@
 .task-views .task-views-bar-done {
     color: #286348;
     background: #d4e9df;
+}
+
+.task-views .task-views-event {
+    color: #63451a;
+    background: #f8dfaa;
+}
+
+.task-views-name small {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 400;
 }
 
 /* 타임라인 아래 날짜 관리 */

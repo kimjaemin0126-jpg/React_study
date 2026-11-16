@@ -6,12 +6,14 @@ const tables = {
   workspace: new Map(),
   member: new Map(),
   invite: new Map(),
+  idea: new Map(),
 }
 
 const DEFAULTS = {
   workspace: () => ({ content: [], closedAt: null, createdAt: new Date(), updatedAt: new Date() }),
   member: () => ({ role: 'VIEWER', removedAt: null, createdAt: new Date() }),
   invite: () => ({ role: 'VIEWER', maxUses: null, useCount: 0, revokedAt: null, createdAt: new Date() }),
+  idea: () => ({ removedAt: null, createdAt: new Date(), updatedAt: new Date() }),
 }
 
 const clone = (value) => structuredClone(value)
@@ -94,13 +96,14 @@ function applyChanges(row, data) {
       row[key] = value
     }
   }
-  if ('content' in data || 'name' in data || 'closedAt' in data) row.updatedAt = new Date()
+  if ('content' in data || 'name' in data || 'closedAt' in data || 'title' in data || 'ideaContent' in data || 'removedAt' in data) row.updatedAt = new Date()
 }
 
 export const store = {
   workspace: createModel('workspace'),
   member: createModel('member'),
   invite: createModel('invite'),
+  idea: createModel('idea'),
 
   // 트랜잭션: 함수 형태는 같은 저장소를 넘기고, 배열 형태는 순서대로 실행
   async $transaction(arg) {

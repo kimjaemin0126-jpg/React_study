@@ -27,12 +27,12 @@ function openCreateForm() {
     setFormOpen(true)
 }
 
-function submitIdea(event) {
+async function submitIdea(event) {
     event.preventDefault()
     if (!title.trim()) return
     const saved = editingId
-        ? updateIdea(editingId, title, content)
-        : addIdea(title, content, section.id)
+        ? await updateIdea(editingId, title, content)
+        : await addIdea(title, content, section.id)
     if (!saved) return
     const added = !editingId
     resetForm()
@@ -123,6 +123,7 @@ return (
 
                 <button
                     type="submit"
+                    className="idea-board-submit"
                     disabled={!title.trim() || !readable}
                 >
                     {editingId ? '수정 저장' : '아이디어 추가'}
@@ -149,7 +150,7 @@ return (
                 key={idea.id}
                 className={`idea-board-card${editingId === idea.id ? ' is-editing' : ''}`}
             >
-                <span className="idea-board-tag">아이디어</span>
+                <span className="idea-board-author">작성자 · {idea.author || '정보 없음'}</span>
 
                 <h3>{idea.title || '제목 없음'}</h3>
 
@@ -162,8 +163,8 @@ return (
                 </span>
                 <div className="idea-board-card-actions">
                     <button type="button" aria-label={`${idea.title} 수정`} onClick={() => editIdea(idea)}>수정</button>
-                    <button type="button" className="idea-board-delete" aria-label={`${idea.title} 삭제`} onClick={() => {
-                        if (window.confirm(`"${idea.title}" 아이디어를 삭제할까요? 삭제하면 되돌릴 수 없습니다.`) && deleteIdea(idea.id)) {
+                    <button type="button" className="idea-board-delete" aria-label={`${idea.title} 삭제`} onClick={async () => {
+                        if (window.confirm(`"${idea.title}" 아이디어를 삭제할까요? 삭제하면 되돌릴 수 없습니다.`) && await deleteIdea(idea.id)) {
                             if (editingId === idea.id) resetForm()
                         }
                     }}>삭제</button>

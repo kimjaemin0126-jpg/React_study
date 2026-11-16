@@ -24,6 +24,10 @@ export const studyApi = {
   getStudy: (workspaceId) => request('GET', `/workspaces/${workspaceId}`),
   getDocument: (workspaceId) => request('GET', `/workspaces/${workspaceId}/document`),
   saveDocument: (workspaceId, { title, blocks }) => request('PUT', `/workspaces/${workspaceId}/document`, { title, blocks }),
+  getIdeas: (workspaceId) => request('GET', `/workspaces/${workspaceId}/ideas`),
+  createIdea: (workspaceId, values) => request('POST', `/workspaces/${workspaceId}/ideas`, values),
+  updateIdea: (workspaceId, ideaId, values) => request('PATCH', `/workspaces/${workspaceId}/ideas/${ideaId}`, values),
+  deleteIdea: (workspaceId, ideaId) => request('DELETE', `/workspaces/${workspaceId}/ideas/${ideaId}`),
 
   getMembers: (workspaceId) => request('GET', `/workspaces/${workspaceId}/members`),
   changeRole: (workspaceId, memberId, role) => request('PATCH', `/workspaces/${workspaceId}/members/${memberId}`, { role }),
