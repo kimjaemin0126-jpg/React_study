@@ -7,6 +7,9 @@ import { workspacesRouter } from './routes/workspaces.js'
 
 export const app = express()
 
+// 서버 종류(Express)를 응답 헤더에 드러내지 않음
+app.disable('x-powered-by')
+
 // 배포 환경(Railway, Render 등)은 앞에 프록시가 있어서, 실제 접속자 IP를 X-Forwarded-For에서 읽도록 설정
 app.set('trust proxy', 1)
 
