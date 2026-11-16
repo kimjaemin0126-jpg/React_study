@@ -181,3 +181,36 @@
 @media (prefers-reduced-motion: reduce) {
     .idea-board-card { transition: none; }
 }
+
+.idea-sections {
+    display: grid;
+    gap: 40px;
+    min-width: 0;
+}
+
+.idea-sections > .idea-board {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+.idea-sections > .button { justify-self: start; }
+
+.idea-board .idea-section-title {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    padding: 6px 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-strong);
+    font: inherit;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.idea-section-title::placeholder { color: var(--muted); }
+.idea-section-title:hover { background: var(--hover); }
+.idea-board-heading > span { flex-shrink: 0; }
