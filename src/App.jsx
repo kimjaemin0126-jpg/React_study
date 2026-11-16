@@ -1,26 +1,30 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { DocumentProvider } from './context/DocumentContext'
+import { DialogProvider } from './common/DialogProvider'
 import AppLayout from './layout/AppLayout'
 import DocumentPage from './pages/DocumentPage'
 import FavoritesPage from './pages/FavoritesPage'
 import HomePage from './pages/HomePage'
+import InvitePage from './pages/InvitePage'
 import NotFoundPage from './pages/NotFoundPage'
 import TrashPage from './pages/TrashPage'
-import './App.css'
 import TasksPage from './pages/TasksPage'
 import IdeaPage from './pages/IdeaPage'
 import AllDocumentPage from './pages/AllDocumentPage'
+import './App.css'
 
 function App() {
   return (
     <BrowserRouter>
+      <DialogProvider>
       <DocumentProvider>
         <Routes>
           <Route element={<AppLayout />}>
             <Route index element={<HomePage />} />
-            <Route path="tasks" element={<TasksPage />} />
-            <Route path="ideas" element={<IdeaPage />} />
-            <Route path="documents" element={<AllDocumentPage />} />
+              <Route path="tasks" element={<TasksPage />} />
+              <Route path="ideas" element={<IdeaPage />} />
+              <Route path="documents" element={<AllDocumentPage />} />
+            <Route path="invite/:code" element={<InvitePage />} />
             <Route path="favorites" element={<FavoritesPage />} />
             <Route path="trash" element={<TrashPage />} />
             <Route path="documents/:documentId" element={<DocumentPage />} />
@@ -29,6 +33,7 @@ function App() {
           </Route>
         </Routes>
       </DocumentProvider>
+      </DialogProvider>
     </BrowserRouter>
   )
 }

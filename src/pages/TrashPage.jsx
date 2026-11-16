@@ -1,9 +1,11 @@
+import { useDialog } from '../context/dialogContext'
 import { RotateCcw, Trash2 } from 'lucide-react'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import { getDocumentTitle, formatRelativeDate } from '../utils/documentUtils'
 
 export default function TrashPage() {
   const { documents, restoreDocument, permanentlyDelete } = useDocumentStore()
+  const dialog = useDialog()
   const deleted = documents.filter((document) => document.isDeleted).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
   return (
     <section className="page-view">
@@ -14,8 +16,8 @@ export default function TrashPage() {
           {deleted.map((document) => <div className="document-row trash-row" key={document.id}>
             <span className="document-row-title"><Trash2 size={16} /><strong>{getDocumentTitle(document)}</strong></span>
             <span className="document-row-date">{formatRelativeDate(document.updatedAt)}</span>
-            <span className="trash-actions"><button type="button" className="text-action" onClick={() => restoreDocument(document.id)}><RotateCcw size={14} />복구</button><button type="button" className="text-action danger" onClick={() => {
-              if (window.confirm('이 문서를 영구 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) permanentlyDelete(document.id)
+            <span className="trash-actions"><button type="button" className="text-action" onClick={() => restoreDocument(document.id)}><RotateCcw size={14} />복구</button><button type="button" className="text-action danger" onClick={async () => {
+              if (await dialog.confirm('이 작업은 되돌릴 수 없습니다.', { title: '영구 삭제', confirmLabel: '영구 삭제', danger: true })) permanentlyDelete(document.id)
             }}>영구 삭제</button></span>
           </div>)}
         </div>
