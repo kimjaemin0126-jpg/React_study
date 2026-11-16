@@ -73,7 +73,12 @@ export default function DocumentPage() {
     let ignore = false
     const timer = window.setInterval(() => {
       if (document.visibilityState !== 'visible') return
-      studyApi.getStudy(workspaceId).catch((err) => {
+      studyApi.getStudy(workspaceId).then((study) => {
+        if (ignore) return
+        setAccess((prev) => (prev?.workspaceId === workspaceId && prev.status === 'ok' && prev.myRole !== study.me.role
+          ? { ...prev, myRole: study.me.role }
+          : prev))
+      }).catch((err) => {
         if (ignore) return
         denyAccess(err, dialog.alert)
         setAccess({ workspaceId, status: err.status === 410 ? 'closed' : 'denied', message: err.message })
@@ -111,7 +116,7 @@ export default function DocumentPage() {
   }
   const isClosed = access?.workspaceId === workspaceId && access.status === 'closed'
   // 보기 권한이면 편집 관련 기능을 막음 (닫힌 스터디는 보관 목적이라 제외)
-  const viewerOnly = workspaceId !== null && access?.workspaceId === workspaceId && access.myRole === 'VIEWER'
+  const viewerOnly = workspaceId !== null && (access?.workspaceId !== workspaceId || access.myRole === 'VIEWER')
   const viewerHint = '보기 권한에서는 사용할 수 없어요'
 
   const children = activeDocuments.filter((document) => document.parentId === current.id)
@@ -128,7 +133,7 @@ export default function DocumentPage() {
         {ancestry.map((parent) => <span key={parent.id} className="breadcrumb-parent"><ChevronRight size={14} /><Link to={`/documents/${parent.id}`}>{getDocumentTitle(parent)}</Link></span>)}
         <span><ChevronRight size={14} />{getDocumentTitle(current)}</span>
         <div className="document-actions">
-          <button type="button" disabled={viewerOnly} title={viewerOnly ? viewerHint : undefined} className={`icon-button ${current.isFavorite ? 'active-favorite' : ''}`} title={current.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'} aria-label={current.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'} onClick={() => updateDocument(current.id, { isFavorite: !current.isFavorite })}><Star size={17} fill={current.isFavorite ? 'currentColor' : 'none'} /></button>
+          <button type="button" disabled={viewerOnly} className={`icon-button ${current.isFavorite ? 'active-favorite' : ''}`} title={viewerOnly ? viewerHint : (current.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가')} aria-label={current.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'} onClick={() => updateDocument(current.id, { isFavorite: !current.isFavorite })}><Star size={17} fill={current.isFavorite ? 'currentColor' : 'none'} /></button>
           {current.workspaceId ? (
             <button type="button" className="icon-button" title="팀원" aria-label="팀원" onClick={toggleMembers}><Users size={16} /></button>
           ) : (

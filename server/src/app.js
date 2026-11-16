@@ -10,7 +10,7 @@ export const app = express()
 // 배포 환경(Railway, Render 등)은 앞에 프록시가 있어서, 실제 접속자 IP를 X-Forwarded-For에서 읽도록 설정
 app.set('trust proxy', 1)
 
-app.use(express.json())
+app.use(express.json({ limit: '1mb' }))
 app.use(cookieParser())
 
 // 전체 요청 제한: 화면이 5초마다 확인하는 요청을 고려해 넉넉하게 설정
@@ -43,6 +43,12 @@ app.use((req, res) => {
 })
 
 app.use((err, req, res, _next) => {
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ error: '문서가 너무 커요. (최대 1MB)' })
+  }
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: '요청 형식이 올바르지 않아요.' })
+  }
   console.error(err)
   res.status(500).json({ error: '서버 오류가 발생했습니다.' })
 })

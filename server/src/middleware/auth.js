@@ -26,6 +26,7 @@ export async function requireMember(req, res, next) {
   if (workspace?.closedAt) {
     return res.status(410).json({ error: '닫힌 스터디입니다.' })
   }
+  await prisma.workspace.update({ where: { id: workspaceId }, data: { lastActiveAt: new Date() } })
 
   req.member = member
   next()
