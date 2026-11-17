@@ -3,11 +3,16 @@ import IdeaBoard from './IdeaBoard'
 import { useIdeas } from '../hooks/useIdeas'
 import { createId } from '../utils/documentUtils'
 
-const SECTIONS_KEY = 'folio-idea-sections-v1'
+const SECTIONS_KEY_PREFIX = 'folio-idea-sections-v1'
 const DEFAULT_SECTION_ID = 'default-ideas'
 
-function loadSections() {
-  const raw = window.localStorage.getItem(SECTIONS_KEY)
+function getSectionsKey(workspaceId) {
+  return `${SECTIONS_KEY_PREFIX}:${workspaceId}`
+}
+
+function loadSections(workspaceId) {
+  if (!workspaceId) return []
+  const raw = window.localStorage.getItem(getSectionsKey(workspaceId))
   if (raw === null) {
     return [{ id: DEFAULT_SECTION_ID, title: '아이디어 섹션 1' }]
   }
@@ -25,20 +30,22 @@ function loadSections() {
   return sections
 }
 
-export default function IdeaSections() {
-  // 카드 저장 상태는 부모 한 곳에서 관리해 섹션 사이의 덮어쓰기를 막습니다.
-  const { ideas, error, readable, addIdea, updateIdea, deleteIdea } = useIdeas()
-  const [sectionStore, setSectionStore] = useState(() => {
-    try {
-      return { sections: loadSections(), error: '', readable: true }
-    } catch {
-      return {
-        sections: [],
-        error: '섹션을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.',
-        readable: false,
-      }
+function createSectionStore(workspaceId) {
+  try {
+    return { sections: loadSections(workspaceId), error: '', readable: true }
+  } catch {
+    return {
+      sections: [],
+      error: '섹션을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.',
+      readable: false,
     }
-  })
+  }
+}
+
+export default function IdeaSections({ workspaceId }) {
+  // 카드 저장 상태는 부모 한 곳에서 관리해 섹션 사이의 덮어쓰기를 막습니다.
+  const { ideas, error, readable, loading, addIdea, updateIdea, deleteIdea } = useIdeas(workspaceId)
+  const [sectionStore, setSectionStore] = useState(() => createSectionStore(workspaceId))
 
   const canEdit = readable && sectionStore.readable
   const boardError = error || sectionStore.error
@@ -46,7 +53,7 @@ export default function IdeaSections() {
   function saveSections(nextSections) {
     if (!canEdit) return
     try {
-      window.localStorage.setItem(SECTIONS_KEY, JSON.stringify(nextSections))
+      window.localStorage.setItem(getSectionsKey(workspaceId), JSON.stringify(nextSections))
       setSectionStore({ sections: nextSections, error: '', readable: true })
     } catch {
       setSectionStore({
@@ -70,6 +77,9 @@ export default function IdeaSections() {
 
   return (
     <div className="idea-sections">
+      {!workspaceId && <p className="idea-board-empty">공유 아이디어 보드를 사용하려면 스터디 문서를 만들거나 초대 링크로 참여하세요.</p>}
+      {loading && <p className="idea-board-empty">아이디어를 불러오는 중입니다.</p>}
+      {workspaceId && <>
       {boardError && <p className="idea-board-error" role="alert">{boardError}</p>}
       {sectionStore.sections.map((section) => (
         <IdeaBoard
@@ -88,6 +98,7 @@ export default function IdeaSections() {
       <button type="button" className="button" onClick={addSection} disabled={!canEdit}>
         + 섹션 추가
       </button>
+      </>}
     </div>
   )
 }

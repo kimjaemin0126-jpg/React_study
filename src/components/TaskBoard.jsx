@@ -22,6 +22,8 @@ const [addingStatus, setAddingStatus] = useState(null)
 
   // 새 카드에 입력한 제목
 const [draftTitle, setDraftTitle] = useState('')
+const [draftStartDate, setDraftStartDate] = useState('')
+const [draftEndDate, setDraftEndDate] = useState('')
 
   // 보드용 문서만 가져오기
 const tasks = activeDocuments.filter((document) => document.isTask)
@@ -29,11 +31,15 @@ const tasks = activeDocuments.filter((document) => document.isTask)
 function openForm(status) {
     setAddingStatus(status)
     setDraftTitle('')
+    setDraftStartDate('')
+    setDraftEndDate('')
 }
 
 function closeForm() {
     setAddingStatus(null)
     setDraftTitle('')
+    setDraftStartDate('')
+    setDraftEndDate('')
 }
 
 function addTask(event) {
@@ -50,6 +56,8 @@ function addTask(event) {
         title,
         isTask: true,
         taskStatus: addingStatus,
+        startDate: draftStartDate || null,
+        endDate: draftStartDate ? (draftEndDate || draftStartDate) : null,
     })
 
     closeForm()
@@ -139,6 +147,21 @@ return (
                         }}
                         required
                     />
+
+                    <div className="task-board-date-fields">
+                        <label>
+                            시작일
+                            <input type="date" value={draftStartDate} onChange={(event) => {
+                                const next = event.target.value
+                                setDraftStartDate(next)
+                                if (draftEndDate && next && draftEndDate < next) setDraftEndDate(next)
+                            }} />
+                        </label>
+                        <label>
+                            종료일
+                            <input type="date" value={draftEndDate} min={draftStartDate || undefined} disabled={!draftStartDate} onChange={(event) => setDraftEndDate(event.target.value)} />
+                        </label>
+                    </div>
 
                     <div className="task-board-form-actions">
                         <button type="button" onClick={closeForm}>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
-import { getTodayKey, shiftMonth, toDateKey } from '../calendar/calendarUtils'
+import { collectEvents, getTodayKey, shiftMonth, toDateKey } from '../calendar/calendarUtils'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import TaskBoard from './TaskBoard'
 import './TaskViews.css'
@@ -122,7 +122,7 @@ function FeedView({ tasks, updateDocument }) {
     )
 }
 
-function TimelineView({ tasks, updateDocument, calendar}) {
+function TimelineView({ tasks, documents, updateDocument, calendar, filter }) {
     const { visibleMonth, setVisibleMonth, selectDate } = calendar
     const { year, month } = visibleMonth
     const lastDay = new Date(year, month + 1, 0).getDate()
@@ -139,13 +139,16 @@ function TimelineView({ tasks, updateDocument, calendar}) {
     const undated = tasks.filter((task) => !task.startDate)
 
     // 이달과 일정 기간이 하루라도 겹치는 항목
-    const visibleTasks = tasks.filter((task) => {
+    const visibleTasks = filter === 'events' ? [] : tasks.filter((task) => {
         if (!task.startDate) return false
 
         const end = task.endDate || task.startDate
 
         return task.startDate <= lastKey && end >= firstKey
     })
+    const visibleEvents = (filter === 'tasks' ? [] : collectEvents(documents)).filter(
+        (event) => event.date >= firstKey && event.date <= lastKey
+    )
 
     function changeMonth(offset) {
         setVisibleMonth((current) => shiftMonth(current, offset))
@@ -180,7 +183,7 @@ function TimelineView({ tasks, updateDocument, calendar}) {
         </div>
 
         <p className="task-views-meta">
-            이달 일정 {visibleTasks.length}개 · 날짜 없음 {undated.length}개
+            기간 작업 {visibleTasks.length}개 · 문서 일정 {visibleEvents.length}개 · 날짜 없음 {undated.length}개
         </p>
 
         <div
@@ -261,6 +264,28 @@ function TimelineView({ tasks, updateDocument, calendar}) {
                 </div>
                 )
             })}
+            {visibleEvents.map((event) => {
+                const day = Number(event.date.slice(-2))
+                return (
+                <div className="task-views-timeline-row" key={`${event.documentId}:${event.id}`}>
+                    <Link className="task-views-name" to={`/documents/${event.documentId}`}>
+                        {event.title || '제목 없음'}
+                        <small>문서 일정 · {event.documentTitle}</small>
+                    </Link>
+                    <div className="task-views-days task-views-track">
+                    {days.map((date) => <span key={toDateKey(date)} className={toDateKey(date) === todayKey ? 'task-views-cell is-today' : 'task-views-cell'} />)}
+                    <Link
+                        to={`/documents/${event.documentId}`}
+                        className="task-views-bar task-views-event"
+                        style={{ gridColumn: `${day} / ${day + 1}`, gridRow: 1 }}
+                        aria-label={`${event.title}, ${event.date}${event.time ? ` ${event.time}` : ''}`}
+                    >
+                        {event.time || '종일'} · {event.title}
+                    </Link>
+                    </div>
+                </div>
+                )
+            })}
             </div>
         </div>
 
@@ -303,6 +328,7 @@ export default function TaskViews() {
     const [views, setViews] = useState(['board'])
     const [activeView, setActiveView] = useState('board')
     const [pickerOpen, setPickerOpen] = useState(false)
+    const [timelineFilter, setTimelineFilter] = useState('all')
 
     function addView(id) {
         setViews((current) =>
@@ -381,7 +407,18 @@ export default function TaskViews() {
 
         {views.includes('timeline') && (
             <div hidden={activeView !== 'timeline'}>
-            <TimelineView tasks={tasks} updateDocument={updateDocument} calendar={calendar} />
+            <div className="task-views-timeline-filters" role="group" aria-label="타임라인 일정 필터">
+              {[
+                { id: 'all', label: '전체' },
+                { id: 'tasks', label: '작업' },
+                { id: 'events', label: '문서 일정' },
+              ].map((item) => (
+                <button key={item.id} type="button" aria-pressed={timelineFilter === item.id} onClick={() => setTimelineFilter(item.id)}>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <TimelineView tasks={tasks} documents={activeDocuments} updateDocument={updateDocument} calendar={calendar} filter={timelineFilter} />
             </div>
         )}
         </section>

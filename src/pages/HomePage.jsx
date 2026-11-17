@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { FileText, Plus } from 'lucide-react'
 import { useDocumentStore } from '../hooks/useDocumentStore'
@@ -16,6 +17,9 @@ import './HomePage.css'
 export default function HomePage() {
   const { activeDocuments } = useDocumentStore()
   const { openNewPage, calendar } = useOutletContext()
+  const [studyName, setStudyName] = useState(
+    () => window.localStorage.getItem('folio-study-name') || '나의 스터디'
+  )
 
   const today = getTodayKey()
 
@@ -32,6 +36,15 @@ export default function HomePage() {
     .filter((document) => !document.isTask)
     .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
     .slice(0, 5)
+  const ongoingTasks = activeDocuments
+    .filter((document) => document.isTask && (document.taskStatus ?? 'todo') !== 'done')
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+    .slice(0, 4)
+
+  function changeStudyName(value) {
+    setStudyName(value)
+    window.localStorage.setItem('folio-study-name', value)
+  }
 
   return (
     <div className="home-dashboard">
@@ -41,7 +54,13 @@ export default function HomePage() {
             {formatDateLabel(today)}
           </p>
 
-          <h1>홈</h1>
+          <input
+            className="home-study-name"
+            aria-label="스터디명"
+            value={studyName}
+            placeholder="스터디명을 입력하세요"
+            onChange={(event) => changeStudyName(event.target.value)}
+          />
 
           <p className="home-dashboard-description">
             오늘 일정을 확인하고 최근 작업을 이어가세요.
@@ -58,6 +77,7 @@ export default function HomePage() {
         </button>
       </header>
 
+      <div className="home-overview-grid">
       <section className="home-section" aria-labelledby="home-today-title">
         <div className="home-section-heading">
           <h2 id="home-today-title">
@@ -115,6 +135,28 @@ export default function HomePage() {
           </p>
         )}
       </section>
+
+      <section className="home-section" aria-labelledby="home-tasks-title">
+        <div className="home-section-heading">
+          <h2 id="home-tasks-title">진행 중인 작업 <span>{ongoingTasks.length}</span></h2>
+          <Link className="home-section-action" to="/tasks">작업 보드 보기 →</Link>
+        </div>
+        {ongoingTasks.length === 0 ? (
+          <p className="home-empty">진행 중인 작업이 없습니다. 일정 메뉴에서 새 작업을 추가해 보세요.</p>
+        ) : (
+          <ul className="home-list">
+            {ongoingTasks.map((task) => (
+              <li key={task.id}>
+                <Link className="home-document-row" to={`/documents/${task.id}`}>
+                  <strong className="home-document-title">{getDocumentTitle(task)}</strong>
+                  <span className="home-task-date">{task.startDate ? `${task.startDate}${task.endDate && task.endDate !== task.startDate ? ` ~ ${task.endDate}` : ''}` : '기간 미정'}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      </div>
 
       <section
         className="home-section"

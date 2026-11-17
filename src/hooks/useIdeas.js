@@ -1,49 +1,54 @@
-import { useState } from 'react'
-import { loadIdeas, saveIdeas } from '../services/ideaStorageService'
-import { createId } from '../utils/documentUtils'
+import { useCallback, useEffect, useState } from 'react'
+import { studyApi } from '../services/studyApi'
 
-export function useIdeas() {
-  const [store, setStore] = useState(() => {
+export function useIdeas(workspaceId) {
+  const [store, setStore] = useState({ ideas: [], error: '', loading: Boolean(workspaceId) })
+  const load = useCallback(async () => {
+    if (!workspaceId) return setStore({ ideas: [], error: '', loading: false })
+    setStore((current) => ({ ...current, loading: true, error: '' }))
     try {
-      return { ideas: loadIdeas(), error: '', readable: true }
-    } catch {
-      return { ideas: [], error: '아이디어를 불러오지 못했습니다. 기존 데이터는 보존됩니다. 새로고침 후 다시 시도해 주세요.', readable: false }
+      const { ideas } = await studyApi.getIdeas(workspaceId)
+      setStore({ ideas, error: '', loading: false })
+    } catch (err) {
+      setStore({ ideas: [], error: err.message, loading: false })
     }
-  })
+  }, [workspaceId])
 
-  function commit(next) {
-    if (!store.readable) return false
+  useEffect(() => { load() }, [load])
+
+  async function addIdea(title, content, sectionId) {
     try {
-      saveIdeas(next)
-      setStore({ ideas: next, error: '', readable: true })
+      const { idea } = await studyApi.createIdea(workspaceId, { title, content, sectionId })
+      setStore((current) => ({ ...current, ideas: [...current.ideas, idea] }))
       return true
-    } catch {
-      setStore({ ...store, error: '아이디어를 저장하지 못했습니다. 입력 내용은 그대로입니다. 저장 공간을 확인하고 다시 시도해 주세요.' })
+    } catch (err) {
+      setStore((current) => ({ ...current, error: err.message }))
       return false
     }
   }
 
-  function addIdea(title, content, sectionId) {
-    const now = new Date().toISOString()
-    return commit([...store.ideas, {
-      id: createId(), sectionId, title: title.trim(), content: content.trim(), createdAt: now, updatedAt: now,
-    }])
+  async function updateIdea(id, title, content) {
+    const currentIdea = store.ideas.find((idea) => idea.id === id)
+    try {
+      const { idea } = await studyApi.updateIdea(workspaceId, id, { title, content, sectionId: currentIdea?.sectionId })
+      setStore((current) => ({ ...current, ideas: current.ideas.map((item) => item.id === id ? idea : item) }))
+      return true
+    } catch (err) {
+      setStore((current) => ({ ...current, error: err.message }))
+      return false
+    }
   }
 
-  function updateIdea(id, title, content) {
-    return commit(store.ideas.map((idea) => idea.id === id
-      ? { ...idea, title: title.trim(), content: content.trim(), updatedAt: new Date().toISOString() }
-      : idea))
+  async function deleteIdea(id) {
+    try {
+      await studyApi.deleteIdea(workspaceId, id)
+      setStore((current) => ({ ...current, ideas: current.ideas.filter((idea) => idea.id !== id) }))
+      return true
+    } catch (err) {
+      setStore((current) => ({ ...current, error: err.message }))
+      return false
+    }
   }
 
-  function deleteIdea(id) {
-    return commit(store.ideas.filter((idea) => idea.id !== id))
-  }
-
-  return {
-    ideas: store.ideas.filter((idea) => !idea.isDeleted),
-    error: store.error,
-    readable: store.readable,
-    addIdea, updateIdea, deleteIdea,
-  }
+  return { ideas: store.ideas, error: store.error, loading: store.loading, readable: Boolean(workspaceId) && !store.loading, addIdea, updateIdea, deleteIdea }
 }

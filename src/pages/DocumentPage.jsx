@@ -8,13 +8,13 @@ import { useDocumentStore } from '../hooks/useDocumentStore'
 import { studyApi } from '../services/studyApi'
 import { formatRelativeDate, getDocumentTitle, hasParentCycle } from '../utils/documentUtils'
 import { exportDocumentToPdf } from '../utils/exportPdf'
+import DocumentSchedule from '../calendar/DocumentSchedule'
 
 // 스터디 접근을 잃었을 때 이유를 알려주는 안내 창 (401/403: 강퇴, 410: 스터디 닫힘)
 // 401/403은 강퇴 등으로 접근을 잃은 경우라서 홈으로 보냄 (닫힌 스터디는 문서에 남김)
 function denyAccess(err, showAlert) {
   if (err.status === 401 || err.status === 403) showAlert('이 스터디에서 나가게 되어 문서를 열 수 없어요.', { title: '문서를 열 수 없어요' })
 }
-import DocumentSchedule from '../calendar/DocumentSchedule'
 
 export default function DocumentPage() {
   const dialog = useDialog()
