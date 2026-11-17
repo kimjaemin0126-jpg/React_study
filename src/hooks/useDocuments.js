@@ -11,7 +11,7 @@ function makeInitialDocuments() {
       title: '환영합니다',
       parentId: null,
       blocks: [
-        { id: createId(), type: 'heading1', content: 'Folio에 오신 것을 환영해요', checked: false },
+        { id: createId(), type: 'heading1', content: 'MODO에 오신 것을 환영해요', checked: false },
         { id: createId(), type: 'paragraph', content: '이곳에서 생각을 정리하고 문서를 만들어 보세요. 모든 변경 사항은 이 브라우저에 자동으로 저장됩니다.', checked: false },
         { id: createId(), type: 'heading2', content: '시작하기', checked: false },
         { id: createId(), type: 'todo', content: '첫 번째 문서를 만들어 보기', checked: false },
