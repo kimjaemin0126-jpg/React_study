@@ -17,6 +17,11 @@ function denyAccess(err, showAlert) {
   if (err.status === 401 || err.status === 403) showAlert('이 스터디에서 나가게 되어 문서를 열 수 없어요.', { title: '문서를 열 수 없어요' })
 }
 
+// 문서 목록을 id 순서로 맞춰서 비교할 수 있게 함
+function sortDocs(list) {
+  return [...list].sort((a, b) => a.id.localeCompare(b.id))
+}
+
 export default function DocumentPage() {
   const dialog = useDialog()
   const { documentId } = useParams()
@@ -76,12 +81,16 @@ export default function DocumentPage() {
     if (!workspaceId) return
     let ignore = false
     const timer = window.setInterval(() => {
-      if (document.visibilityState !== 'visible') return
-      studyApi.getStudy(workspaceId).then((study) => {
+      if (document.visibilityState !== 'visible' || hasUnsaved) return
+      studyApi.getDocument(workspaceId).then((remote) => {
         if (ignore) return
-        setAccess((prev) => (prev?.workspaceId === workspaceId && prev.status === 'ok' && prev.myRole !== study.me.role
-          ? { ...prev, myRole: study.me.role }
+        setAccess((prev) => (prev?.workspaceId === workspaceId && prev.status === 'ok' && prev.myRole !== remote.myRole
+          ? { ...prev, myRole: remote.myRole }
           : prev))
+        // 다른 사람이 고친 내용(하위 페이지, 일정 포함)을 반영 (바뀐 경우에만)
+        if (remote.docs?.length && JSON.stringify(sortDocs(remote.docs)) !== studyJson) {
+          mergeStudyDocuments(workspaceId, remote.docs)
+        }
       }).catch((err) => {
         if (ignore) return
         denyAccess(err, dialog.alert)
@@ -93,19 +102,26 @@ export default function DocumentPage() {
       ignore = true
       window.clearInterval(timer)
     }
-  }, [workspaceId, documentId, updateDocument, updateWorkspaceDocuments, mergeStudyDocuments, dialog])
+  }, [workspaceId, documentId, updateDocument, updateWorkspaceDocuments, mergeStudyDocuments, dialog, studyJson, hasUnsaved])
 
   // 스터디의 문서 목록 전체(하위 페이지, 일정 포함)를 서버에 저장 (입력이 0.8초 멈추면 저장)
-  const studyPayload = workspaceId ? JSON.stringify({ docs: toStudyDocs(activeDocuments, workspaceId) }) : null
+  const studyDocs = workspaceId ? toStudyDocs(activeDocuments, workspaceId) : []
+  const studyPayload = workspaceId ? JSON.stringify({ docs: studyDocs }) : null
+  const studyJson = JSON.stringify(sortDocs(studyDocs))
+  const [savedJson, setSavedJson] = useState('') // 서버에 마지막으로 저장된 문서 목록
+  const hasUnsaved = canEdit && studyJson !== savedJson // 저장 대기 중인 내 변경이 있으면 서버 내용으로 덮어쓰지 않음
   useEffect(() => {
     if (!workspaceId || !canEdit || !studyPayload) return
     const timer = window.setTimeout(() => {
       studyApi.saveDocument(workspaceId, JSON.parse(studyPayload))
-        .then(() => setSyncError(''))
+        .then(() => {
+          setSyncError('')
+          setSavedJson(studyJson)
+        })
         .catch((err) => setSyncError(err.message))
     }, 800)
     return () => window.clearTimeout(timer)
-  }, [workspaceId, canEdit, studyPayload])
+  }, [workspaceId, canEdit, studyPayload, studyJson])
 
   // 문서를 새로 열거나 바꿀 때 창을 맨 위로 올림
   useLayoutEffect(() => {
