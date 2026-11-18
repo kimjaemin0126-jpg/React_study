@@ -3,10 +3,9 @@ import { useId, useRef, useState } from 'react'
 import './IdeaBoard.css'
 import Modal from '../common/Modal'
 
-export default function IdeaBoard({
-    section, ideas, error, readable, addIdea, updateIdea, deleteIdea, onRenameSection,
+export default function IdeaBoard({section, ideas, error, readable, addIdea, updateIdea, deleteIdea, onRenameSection, selectedIds, onToggleSelection, selectionDisabled,
 }) {
-  const dialog = useDialog()
+    const dialog = useDialog()
     const [title, setTitle] = useState('')
     const [content, setContent] = useState('')
     const [editingId, setEditingId] = useState(null)
@@ -22,9 +21,6 @@ function resetForm() {
 }
 
 function openCreateForm() {
-    setTitle('')
-    setContent('')
-    setEditingId(null)
     resetForm()
     setFormOpen(true)
 }
@@ -149,10 +145,28 @@ return (
         <div className="idea-board-grid" id={sliderId} ref={sliderRef} role="region" aria-label="아이디어 카드 목록, 가로 스크롤 가능" tabIndex={0}>
             {ideas.map((idea) => (
                 <article
-                key={idea.id}
-                className={`idea-board-card${editingId === idea.id ? ' is-editing' : ''}`}
-            >
-                <span className="idea-board-author">작성자 · {idea.author || '정보 없음'}</span>
+                    key={idea.id}
+                    className={[
+                        'idea-board-card',
+                        editingId === idea.id ? 'is-editing' : '',
+                        selectedIds.includes(idea.id) ? 'is-selected' : '',
+                    ].filter(Boolean).join(' ')}
+                >
+                <div className="idea-card-top">
+                    <label className="idea-card-checkbox">
+                        <input
+                        type="checkbox"
+                        aria-label={`${idea.title || '제목 없음'} 선택`}
+                        checked={selectedIds.includes(idea.id)}
+                        onChange={() => onToggleSelection(idea.id)}
+                        disabled={selectionDisabled}
+                        />
+                    </label>
+
+                    <span className="idea-board-author">
+                        작성자 · {idea.author || '정보 없음'}
+                    </span>
+                </div>
 
                 <h3>{idea.title || '제목 없음'}</h3>
 
@@ -163,9 +177,10 @@ return (
                 <span className="idea-board-date">
                     {new Date(idea.createdAt).toLocaleDateString('ko-KR')}
                 </span>
+
                 <div className="idea-board-card-actions">
-                    <button type="button" aria-label={`${idea.title} 수정`} onClick={() => editIdea(idea)}>수정</button>
-                    <button type="button" className="idea-board-delete" aria-label={`${idea.title} 삭제`} onClick={async () => {
+                    <button type="button" disabled={!readable} aria-label={`${idea.title} 수정`} onClick={() => editIdea(idea)}>수정</button>
+                    <button type="button" disabled={!readable} className="idea-board-delete" aria-label={`${idea.title} 삭제`} onClick={async () => {
                         if (await dialog.confirm(`"${idea.title}" 아이디어를 삭제할까요? 삭제하면 되돌릴 수 없습니다.`, { title: '아이디어 삭제', confirmLabel: '삭제', danger: true }) && await deleteIdea(idea.id)) {
                             if (editingId === idea.id) resetForm()
                         }

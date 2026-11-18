@@ -2,8 +2,11 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import './TaskBoard.css'
+import { useDialog } from '../context/dialogContext'
+import { X } from 'lucide-react'
+import Modal from '../common/Modal'
+import { getDocumentTitle } from '../utils/documentUtils'
 
-// 각 열의 저장값, 표시 이름, 색상 구분
 const columns = [
     { id: 'todo', label: '시작 전', color: 'gray' },
     { id: 'doing', label: '진행 중', color: 'blue' },
@@ -17,13 +20,21 @@ const {
     updateDocument,
 } = useDocumentStore()
 
-  // 어느 열에서 입력창을 열었는지
+const dialog = useDialog()
 const [addingStatus, setAddingStatus] = useState(null)
 
   // 새 카드에 입력한 제목
 const [draftTitle, setDraftTitle] = useState('')
 const [draftStartDate, setDraftStartDate] = useState('')
 const [draftEndDate, setDraftEndDate] = useState('')
+
+const [importOpen, setImportOpen] = useState(false)
+const [selectedDocumentIds, setSelectedDocumentIds] = useState([])
+
+// 이미 보드에 있는 문서는 가져오기 목록에서 제외
+const importableDocuments = activeDocuments.filter(
+    (document) => !document.isTask,
+)
 
   // 보드용 문서만 가져오기
 const tasks = activeDocuments.filter((document) => document.isTask)
@@ -63,6 +74,56 @@ function addTask(event) {
     closeForm()
     }
 
+async function removeFromBoard(task) {
+    const confirmed = await dialog.confirm(
+        `"${getDocumentTitle(task)}" 문서를 작업 보드에서 제거할까요? 원본 문서와 내용, 날짜는 유지됩니다.`,
+        {
+        title: '보드에서 제거',
+        confirmLabel: '제거',
+        },
+    )
+
+    if (!confirmed) return
+
+    updateDocument(task.id, { isTask: false })
+}
+function openImport() {
+    closeForm()
+    setSelectedDocumentIds([])
+    setImportOpen(true)
+}
+
+function closeImport() {
+    setImportOpen(false)
+    setSelectedDocumentIds([])
+}
+
+function toggleImportDocument(documentId) {
+    setSelectedDocumentIds((current) =>
+        current.includes(documentId)
+        ? current.filter((id) => id !== documentId)
+        : [...current, documentId],
+    )
+}
+
+function importDocuments(event) {
+    event.preventDefault()
+
+    const targets = importableDocuments.filter((document) =>
+        selectedDocumentIds.includes(document.id),
+    )
+
+    if (targets.length === 0) return
+
+    for (const document of targets) {
+        updateDocument(document.id, {
+        isTask: true,
+        taskStatus: 'todo',
+        })
+    }
+
+    closeImport()
+}
 return (
     <section className="task-board" aria-labelledby="task-board-title">
         <div className="task-board-header">
@@ -71,9 +132,9 @@ return (
             <button
             type="button"
             className="task-board-create"
-            onClick={() => openForm('todo')}
+            onClick={openImport}
             >
-            새로 만들기
+            문서 가져오기
             </button>
         </div>
 
@@ -112,7 +173,6 @@ return (
                         </Link>
 
                         <label className="task-board-status-field">
-                        <span>상태</span>
 
                         <select
                             aria-label={`${task.title || '제목 없음'} 상태 변경`}
@@ -130,6 +190,15 @@ return (
                             ))}
                         </select>
                         </label>
+                        <button
+                            type="button"
+                            className="task-board-delete"
+                            title="보드에서 제거"
+                            aria-label={`${task.title || '제목 없음'} 보드에서 제거`}
+                            onClick={() => removeFromBoard(task)}
+                            >
+                            <X size={15} />
+                        </button>
                     </article>
                     ))}
                 </div>
@@ -187,6 +256,66 @@ return (
             )
             })}
         </div>
+        {importOpen && (
+            <Modal
+                title="작업 보드에 문서 가져오기"
+                onClose={closeImport}
+                className="task-import-modal"
+            >
+                <form onSubmit={importDocuments}>
+                <p className="task-import-description">
+                    작업 보드에 추가할 문서를 선택하세요.
+                    선택한 문서는 ‘시작 전’에 표시됩니다.
+                </p>
+
+                <div className="task-import-list">
+                    {importableDocuments.length === 0 ? (
+                    <p className="task-import-empty">
+                        가져올 문서가 없습니다.
+                        이미 보드에 있는 문서는 목록에서 제외됩니다.
+                    </p>
+                    ) : (
+                    importableDocuments.map((document) => (
+                        <label
+                        key={document.id}
+                        className="task-import-item"
+                        >
+                        <input
+                            type="checkbox"
+                            checked={selectedDocumentIds.includes(document.id)}
+                            onChange={() => toggleImportDocument(document.id)}
+                        />
+
+                        <span>{getDocumentTitle(document)}</span>
+                        </label>
+                    ))
+                    )}
+                </div>
+
+                <div className="task-import-actions">
+                    <button
+                    type="button"
+                    className="button"
+                    onClick={closeImport}
+                    >
+                    취소
+                    </button>
+
+                    <button
+                    type="submit"
+                    className="button button-primary"
+                    disabled={
+                        !importableDocuments.some((document) =>
+                        selectedDocumentIds.includes(document.id),
+                        )
+                    }
+                    >
+                    선택한 문서 가져오기
+                    </button>
+                </div>
+                </form>
+            </Modal>
+            )}
     </section>
 )
 }

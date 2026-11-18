@@ -30,9 +30,7 @@
     gap: 5px;
 }
 
-.task-views-tabs button,
-.task-views-add,
-.task-views-picker button {
+.task-views-tabs button {
     padding: 8px 12px;
     border: 0;
     border-radius: 20px;
@@ -49,18 +47,8 @@
     font-weight: 600;
 }
 
-.task-views-tabs button:hover,
-.task-views-add:hover,
-.task-views-picker button:hover {
+.task-views-tabs button:hover {
     background: var(--hover);
-}
-
-.task-views-picker {
-    margin-bottom: 20px;
-    padding: 16px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--surface);
 }
 
 .task-views-timeline-filters {
@@ -85,11 +73,6 @@
     color: var(--primary);
     background: var(--focus-soft);
     font-weight: 600;
-}
-
-.task-views-picker p {
-    color: var(--subtle);
-    font-size: 13px;
 }
 
 /* 피드 보기 */

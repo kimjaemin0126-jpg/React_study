@@ -28,9 +28,8 @@ export function useIdeas(workspaceId) {
   }
 
   async function updateIdea(id, title, content) {
-    const currentIdea = store.ideas.find((idea) => idea.id === id)
     try {
-      const { idea } = await studyApi.updateIdea(workspaceId, id, { title, content, sectionId: currentIdea?.sectionId })
+      const { idea } = await studyApi.updateIdea(workspaceId, id, { title, content })
       setStore((current) => ({ ...current, ideas: current.ideas.map((item) => item.id === id ? idea : item) }))
       return true
     } catch (err) {
@@ -50,5 +49,34 @@ export function useIdeas(workspaceId) {
     }
   }
 
-  return { ideas: store.ideas, error: store.error, loading: store.loading, readable: Boolean(workspaceId) && !store.loading, addIdea, updateIdea, deleteIdea }
+async function moveIdea(id, sectionId) {
+  const currentIdea = store.ideas.find((idea) => idea.id === id)
+
+  if (!currentIdea) return false
+
+  try {
+    const { idea } = await studyApi.updateIdea(workspaceId, id, {
+      sectionId,
+    })
+
+    setStore((current) => ({
+      ...current,
+      error: '',
+      ideas: current.ideas.map((item) =>
+        item.id === id ? idea : item,
+      ),
+    }))
+
+    return true
+  } catch (err) {
+    setStore((current) => ({
+      ...current,
+      error: err.message,
+    }))
+
+    return false
+  }
+}
+
+  return { ideas: store.ideas, error: store.error, loading: store.loading, readable: Boolean(workspaceId) && !store.loading, addIdea, updateIdea, deleteIdea,moveIdea }
 }

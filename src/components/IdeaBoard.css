@@ -68,7 +68,6 @@
     cursor: not-allowed;
 }
 
-/* 카드 수와 관계없이 같은 폭으로 유지하고 가로로 이어 붙입니다. */
 .idea-board-grid {
     display: flex;
     gap: 16px;
@@ -155,13 +154,6 @@
     font-size: 14px;
 }
 
-.idea-board-form-actions,
-.idea-board-card-actions,
-.idea-board-slide-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
 .idea-board-form-actions { justify-content: flex-end; }
 .idea-board-card-actions { margin-top: 14px; }
 .idea-board-slide-controls { margin-bottom: 10px; }
@@ -178,9 +170,7 @@
 .idea-board-card-actions button:hover,
 .idea-board-slide-controls button:hover { background: var(--hover); }
 .idea-board-card-actions .idea-board-delete { color: var(--danger); }
-.idea-board-edit-label { font-size: 13px; color: var(--primary); }
 .idea-board-card.is-editing { border-color: var(--primary); }
-.idea-board-note { color: var(--subtle); font-size: 12px; line-height: 1.6; }
 .idea-board-error { color: var(--danger); font-size: 13px; }
 .idea-board :is(button, input, textarea, [tabindex]):focus-visible {
     outline: 2px solid var(--focus);
@@ -222,3 +212,90 @@
 .idea-section-title::placeholder { color: var(--muted); }
 .idea-section-title:hover { background: var(--hover); }
 .idea-board-heading > span { flex-shrink: 0; }
+
+/* 카드를 선택했을 때 나타나는 공용 도구 모음 */
+.idea-selection-toolbar {
+    position: sticky;
+    top: 12px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 8%);
+}
+
+.idea-selection-toolbar strong {
+    margin-right: auto;
+    color: var(--text-strong);
+    font-size: 14px;
+}
+
+.idea-selection-toolbar select {
+    max-width: 100%;
+    min-width: 160px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--canvas);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+}
+
+.idea-selection-toolbar button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.idea-selection-toolbar :is(button, select):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    }
+
+.idea-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.idea-card-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--subtle);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.idea-card-checkbox input {
+    width: 12px;
+    height: 12px;
+    margin: 0;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+/* 선택한 카드 강조 */
+.idea-board-card.is-selected {
+    border-color: var(--primary);
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.idea-selection-message {
+    margin: 0;
+    color: var(--subtle);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.idea-selection-message:empty {
+    display: none;
+}

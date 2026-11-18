@@ -12,6 +12,7 @@ export default function DocumentsPage() {
         title="모든 문서"
         description="작성한 문서를 확인하고 이어서 작업하세요."
         onNewPage={openNewPage}
+        selectable
         />
     )
 }
