@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { prisma } from '../db.js'
 import { INVITE_EXPIRES_HOURS, INVITE_MAX_USES } from '../config.js'
 import { requireEditor, requireMember, requireOwner } from '../middleware/auth.js'
-import { sanitizeBlocks } from '../utils/document.js'
+import { sanitizeBlocks, sanitizeDocs } from '../utils/document.js'
 import { memberCookieName, setMemberCookie } from '../utils/cookie.js'
 import { generateToken, hashToken } from '../utils/token.js'
 
@@ -63,6 +63,7 @@ workspacesRouter.get('/:workspaceId/document', requireMember, async (req, res) =
   res.json({
     title: workspace.name,
     blocks: workspace.content,
+    docs: workspace.docs,
     updatedAt: workspace.updatedAt,
     myRole: req.member.role,
   })
@@ -75,6 +76,20 @@ workspacesRouter.put(
   requireMember,
   requireEditor,
   async (req, res) => {
+    // 문서 목록 전체 저장 (하위 페이지, 일정 포함). 첫 번째 최상위 문서가 스터디 대표 문서가 됨
+    if (req.body?.docs !== undefined) {
+      const docs = sanitizeDocs(req.body.docs)
+      if (!docs) {
+        return res.status(400).json({ error: '문서 내용이 올바르지 않습니다.' })
+      }
+      const root = docs.find((doc) => doc.parentId === null) ?? docs[0]
+      const workspace = await prisma.workspace.update({
+        where: { id: req.params.workspaceId },
+        data: { docs, content: root.blocks, name: root.title || '제목 없음' },
+      })
+      return res.json({ title: workspace.name, blocks: workspace.content, docs: workspace.docs, updatedAt: workspace.updatedAt })
+    }
+
     const blocks = sanitizeBlocks(req.body?.blocks)
     if (!blocks) {
       return res.status(400).json({ error: '문서 내용이 올바르지 않습니다.' })

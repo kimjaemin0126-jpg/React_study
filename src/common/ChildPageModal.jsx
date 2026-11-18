@@ -36,6 +36,7 @@ export default function ChildPageModal({ parentId, onClose }) {
         updateDocument(id, {
         title: title.trim(),
         blocks,
+        ...(parent.workspaceId ? { workspaceId: parent.workspaceId } : {}),
         })
 
         onClose()

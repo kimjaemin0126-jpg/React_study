@@ -10,7 +10,7 @@ const tables = {
 }
 
 const DEFAULTS = {
-  workspace: () => ({ content: [], closedAt: null, lastActiveAt: new Date(), createdAt: new Date(), updatedAt: new Date() }),
+  workspace: () => ({ content: [], docs: [], closedAt: null, lastActiveAt: new Date(), createdAt: new Date(), updatedAt: new Date() }),
   member: () => ({ role: 'VIEWER', removedAt: null, createdAt: new Date() }),
   invite: () => ({ role: 'VIEWER', maxUses: null, useCount: 0, revokedAt: null, createdAt: new Date() }),
   idea: () => ({ removedAt: null, createdAt: new Date(), updatedAt: new Date() }),
@@ -96,7 +96,7 @@ function applyChanges(row, data) {
       row[key] = value
     }
   }
-  if ('content' in data || 'name' in data || 'closedAt' in data || 'title' in data || 'ideaContent' in data || 'removedAt' in data) row.updatedAt = new Date()
+  if ('content' in data || 'docs' in data || 'name' in data || 'closedAt' in data || 'title' in data || 'ideaContent' in data || 'removedAt' in data) row.updatedAt = new Date()
 }
 
 // 마지막 사용 후 maxIdleMs가 지난 스터디를 메모리에서 지운다 (스터디, 멤버, 초대 링크 모두)

@@ -8,6 +8,7 @@ import { useDocumentStore } from '../hooks/useDocumentStore'
 import { studyApi } from '../services/studyApi'
 import { formatRelativeDate, getDocumentTitle, hasParentCycle } from '../utils/documentUtils'
 import { exportDocumentToPdf } from '../utils/exportPdf'
+import { toStudyDocs } from '../utils/studyDocs'
 import DocumentSchedule from '../calendar/DocumentSchedule'
 
 // 스터디 접근을 잃었을 때 이유를 알려주는 안내 창 (401/403: 강퇴, 410: 스터디 닫힘)
@@ -21,7 +22,7 @@ export default function DocumentPage() {
   const { documentId } = useParams()
   const navigate = useNavigate()
   const { openChildPage, calendar, handleCreateStudy, toggleMembers } = useOutletContext()
-  const { documents, activeDocuments, updateDocument, moveToTrash, duplicateDocument, moveDocument } = useDocumentStore()
+  const { documents, activeDocuments, updateDocument, moveToTrash, duplicateDocument, moveDocument, mergeStudyDocuments, updateWorkspaceDocuments } = useDocumentStore()
   const current = documents.find((document) => document.id === documentId && !document.isDeleted)
   const ancestry = useMemo(() => {
     if (!current) return []
@@ -42,8 +43,6 @@ export default function DocumentPage() {
   const accessReady = workspaceId !== null && access?.workspaceId === workspaceId && access.status === 'ok'
   const canEdit = accessReady && ['OWNER', 'EDITOR'].includes(access.myRole)
   const inert = workspaceId !== null && !canEdit
-  const title = current?.title
-  const blocks = current?.blocks
 
   // 스터디 문서는 서버 내용을 기준으로 불러옴 (강퇴, 권한 변경이 바로 반영되도록)
   useEffect(() => {
@@ -52,20 +51,24 @@ export default function DocumentPage() {
     studyApi.getDocument(workspaceId)
       .then((remote) => {
         if (ignore) return
-        updateDocument(documentId, {
-          title: remote.title,
-          blocks: remote.blocks.length ? remote.blocks : [createBlock()]
-        })
+        if (remote.docs?.length) {
+          mergeStudyDocuments(workspaceId, remote.docs)
+        } else {
+          updateDocument(documentId, {
+            title: remote.title,
+            blocks: remote.blocks.length ? remote.blocks : [createBlock()]
+          })
+        }
         setAccess({ workspaceId, status: 'ok', myRole: remote.myRole })
       })
       .catch((err) => {
         if (ignore) return
         denyAccess(err, dialog.alert)
         setAccess({ workspaceId, status: err.status === 410 ? 'closed' : 'denied', message: err.message })
-        if (err.status === 401 || err.status === 403) updateDocument(documentId, { studyLeft: true })
+        if (err.status === 401 || err.status === 403) updateWorkspaceDocuments(workspaceId, { studyLeft: true })
       })
     return () => { ignore = true }
-  }, [workspaceId, documentId, updateDocument, dialog])
+  }, [workspaceId, documentId, updateDocument, updateWorkspaceDocuments, mergeStudyDocuments, dialog])
 
   // 문서를 열어둔 채로도 강퇴, 스터디 닫기가 바로 반영되도록 주기적으로 권한을 확인
   // (내용은 다시 불러오지 않아서 입력 중인 글이 지워지지 않음)
@@ -83,25 +86,26 @@ export default function DocumentPage() {
         if (ignore) return
         denyAccess(err, dialog.alert)
         setAccess({ workspaceId, status: err.status === 410 ? 'closed' : 'denied', message: err.message })
-        if (err.status === 401 || err.status === 403) updateDocument(documentId, { studyLeft: true })
+        if (err.status === 401 || err.status === 403) updateWorkspaceDocuments(workspaceId, { studyLeft: true })
       })
     }, 5000)
     return () => {
       ignore = true
       window.clearInterval(timer)
     }
-  }, [workspaceId, documentId, updateDocument, dialog])
+  }, [workspaceId, documentId, updateDocument, updateWorkspaceDocuments, mergeStudyDocuments, dialog])
 
-  // 편집 내용을 서버에 저장 (입력이 0.8초 멈추면 저장, 보기 권한은 저장하지 않음)
+  // 스터디의 문서 목록 전체(하위 페이지, 일정 포함)를 서버에 저장 (입력이 0.8초 멈추면 저장)
+  const studyPayload = workspaceId ? JSON.stringify({ docs: toStudyDocs(activeDocuments, workspaceId) }) : null
   useEffect(() => {
-    if (!workspaceId || !canEdit || !blocks) return
+    if (!workspaceId || !canEdit || !studyPayload) return
     const timer = window.setTimeout(() => {
-      studyApi.saveDocument(workspaceId, { title, blocks })
+      studyApi.saveDocument(workspaceId, JSON.parse(studyPayload))
         .then(() => setSyncError(''))
         .catch((err) => setSyncError(err.message))
     }, 800)
     return () => window.clearTimeout(timer)
-  }, [workspaceId, canEdit, title, blocks])
+  }, [workspaceId, canEdit, studyPayload])
 
   // 문서를 새로 열거나 바꿀 때 창을 맨 위로 올림
   useLayoutEffect(() => {

@@ -12,6 +12,7 @@ import '../calendar/calendar.css'
 import MembersPanel from '../components/MembersPanel'
 import { studyApi } from '../services/studyApi'
 import { getDocumentTitle } from '../utils/documentUtils'
+import { collectDescendantIds, toStudyDocs } from '../utils/studyDocs'
 
 export default function AppLayout() {
   const [templateOpen, setTemplateOpen] = useState(false)
@@ -28,7 +29,7 @@ export default function AppLayout() {
     isOpen: Boolean(tasksMatch) || (Boolean(documentMatch) && calendar.isOpen),
     isPinned: Boolean(tasksMatch),
   }
-  const { documents, activeDocuments, createDocument, updateDocument, storageError } = useDocumentStore()
+  const { documents, activeDocuments, createDocument, updateDocument, storageError, attachStudy, updateWorkspaceDocuments } = useDocumentStore()
   const currentDocument = documentMatch
     ? documents.find((document) => document.id === documentMatch.params.documentId && !document.isDeleted)
     : undefined
@@ -54,8 +55,10 @@ export default function AppLayout() {
     const name = getDocumentTitle(currentDocument).slice(0, 50)
     try {
       const { workspace } = await studyApi.createStudy(name, nickname.slice(0, 20))
-      await studyApi.saveDocument(workspace.id, { title: name, blocks: currentDocument.blocks })
-      updateDocument(currentDocument.id, { workspaceId: workspace.id })
+      const ids = collectDescendantIds(documents, currentDocument.id)
+      const docs = toStudyDocs(documents.filter((document) => ids.has(document.id)).map((document) => ({ ...document, workspaceId: workspace.id })), workspace.id)
+      await studyApi.saveDocument(workspace.id, { docs })
+      attachStudy(currentDocument.id, workspace.id)
       setMobileSidebarOpen(false)
       setShowMembers(true)
     } catch (err) {
@@ -102,7 +105,7 @@ export default function AppLayout() {
           onClosed={() => setShowMembers(false)}
           onLeft={() => {
             // 나간 스터디 문서는 목록에서 숨김 (문서 자체는 이 기기에 남김)
-            updateDocument(currentDocument.id, { studyLeft: true })
+            updateWorkspaceDocuments(currentDocument.workspaceId, { studyLeft: true })
             setShowMembers(false)
             navigate('/')
           }}

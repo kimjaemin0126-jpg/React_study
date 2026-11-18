@@ -164,6 +164,58 @@ export function useDocuments() {
     [documents]
   )
 
+  // 서버의 스터디 문서를 이 브라우저에 반영 (같은 id면 서버 내용으로 맞춤)
+  const mergeStudyDocuments = useCallback((workspaceId, remoteDocs) => {
+    setDocuments((current) => {
+      const byId = new Map(current.map((document) => [document.id, document]))
+      const now = new Date().toISOString()
+      for (const remote of remoteDocs) {
+        const local = byId.get(remote.id)
+        byId.set(remote.id, {
+          isFavorite: false,
+          isDeleted: false,
+          createdAt: now,
+          ...local,
+          id: remote.id,
+          parentId: remote.parentId ?? null,
+          title: remote.title,
+          blocks: remote.blocks,
+          events: remote.events ?? [],
+          isTask: remote.isTask ?? false,
+          startDate: remote.startDate ?? null,
+          endDate: remote.endDate ?? null,
+          status: remote.status ?? null,
+          workspaceId,
+          updatedAt: now,
+        })
+      }
+      return [...byId.values()]
+    })
+  }, [])
+
+  // 문서와 그 하위 문서 전체를 스터디에 연결
+  const attachStudy = useCallback((documentId, workspaceId) => {
+    setDocuments((current) => {
+      const ids = new Set([documentId])
+      let changed = true
+      while (changed) {
+        changed = false
+        current.forEach((document) => {
+          if (document.parentId && ids.has(document.parentId) && !ids.has(document.id)) {
+            ids.add(document.id)
+            changed = true
+          }
+        })
+      }
+      return current.map((document) => (ids.has(document.id) ? { ...document, workspaceId } : document))
+    })
+  }, [])
+
+  // 같은 스터디의 모든 문서에 변경 적용 (예: 나간 스터디 표시)
+  const updateWorkspaceDocuments = useCallback((workspaceId, changes) => {
+    setDocuments((current) => current.map((document) => (document.workspaceId === workspaceId ? { ...document, ...changes } : document)))
+  }, [])
+
   return {
     documents,
     activeDocuments,
@@ -175,6 +227,9 @@ export function useDocuments() {
     restoreDocument,
     permanentlyDelete,
     duplicateDocument,
-    moveDocument
+    moveDocument,
+    mergeStudyDocuments,
+    attachStudy,
+    updateWorkspaceDocuments
   }
 }

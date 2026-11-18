@@ -10,7 +10,7 @@ import '../components/study.css'
 export default function InvitePage() {
   const { code } = useParams()
   const navigate = useNavigate()
-  const { documents, createDocument, updateDocument } = useDocumentStore()
+  const { documents, createDocument, updateDocument, mergeStudyDocuments } = useDocumentStore()
   const [nickname, setNickname] = useState('')
   const [error, setError] = useState('')
   const [invalidMessage, setInvalidMessage] = useState('')
@@ -32,6 +32,12 @@ export default function InvitePage() {
       }
 
       const remote = await studyApi.getDocument(workspace.id)
+      if (remote.docs?.length) {
+        mergeStudyDocuments(workspace.id, remote.docs)
+        const root = remote.docs.find((doc) => doc.parentId === null) ?? remote.docs[0]
+        navigate('/documents/' + root.id)
+        return
+      }
       const documentId = createDocument('blank')
       updateDocument(documentId, {
         title: remote.title,
