@@ -223,6 +223,39 @@
   gap: 8px;
 }
 
+.calendar-event-range {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted, #6b7280);
+  font-size: 11px;
+}
+
+.calendar-form-range {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.calendar-form-range label {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--muted, #6b7280);
+}
+
+.calendar-form-range input {
+  width: 100%;
+  min-width: 0;
+}
+
+.calendar-form-range > span {
+  padding-bottom: 7px;
+  color: var(--muted, #6b7280);
+}
+
 .calendar-form-actions {
   display: flex;
   justify-content: flex-end;

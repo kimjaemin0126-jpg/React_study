@@ -33,8 +33,8 @@ export default function Sidebar({ mobileOpen, onCloseMobile, onNewPage, onNewChi
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
       <div className="workspace-switcher">
-        <div className="workspace-mark">F</div>
-        <div className="workspace-name"><strong>Folio</strong><small>개인 워크스페이스</small></div>
+        <div className="workspace-mark">M</div>
+        <div className="workspace-name"><strong>MODO</strong><small>개인 워크스페이스</small></div>
         <button type="button" className="icon-button sidebar-collapse" aria-label={collapsed ? '사이드바 펼치기' : '사이드바 접기'} onClick={() => setCollapsed(!collapsed)}>{collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}</button>
         <button type="button" className="icon-button mobile-close" aria-label="사이드바 닫기" onClick={onCloseMobile}><ChevronsLeft size={17} /></button>
       </div>

@@ -9,8 +9,8 @@ function EventLinks({ events, showDate = false }) {
         <li key={event.id}>
           <Link className="calendar-event-link" to={`/documents/${event.documentId}`}>
             <span className="calendar-event-time">
-              {event.kind === 'period'
-                ? `${formatDateLabel(event.date)}${event.endDate !== event.date ? ` ~ ${formatDateLabel(event.endDate)}` : ''}`
+              {event.endDate !== event.date
+                ? `${formatDateLabel(event.date)} ~ ${formatDateLabel(event.endDate)}`
                 : showDate ? `${formatDateLabel(event.date)}${event.time ? ` ${event.time}` : ''}` : event.time || '종일'}
             </span>
             <span className="calendar-event-title">{event.title}</span>
