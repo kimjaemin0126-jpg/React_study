@@ -42,6 +42,35 @@ function validatePatch(body) {
   return Object.keys(changes).length > 0 ? changes : null
 }
 
+// 아이디어 섹션 목록: 스터디 전체가 같은 목록을 봄
+const DEFAULT_SECTION = { id: 'default-ideas', title: '아이디어 섹션 1' }
+
+function validateSections(body) {
+  if (!Array.isArray(body) || body.length === 0 || body.length > 50) return null
+  const ids = new Set()
+  const cleaned = []
+  for (const section of body) {
+    const title = typeof section?.title === 'string' ? section.title.trim() : ''
+    const id = typeof section?.id === 'string' ? section.id : ''
+    if (!id || id.length > 100 || !title || title.length > 50 || ids.has(id)) return null
+    ids.add(id)
+    cleaned.push({ id, title })
+  }
+  return ids.has(DEFAULT_SECTION.id) ? cleaned : null
+}
+
+ideasRouter.get('/sections', requireMember, async (req, res) => {
+  const workspace = await prisma.workspace.findUnique({ where: { id: req.params.workspaceId } })
+  res.json({ sections: workspace.ideaSections?.length ? workspace.ideaSections : [DEFAULT_SECTION] })
+})
+
+ideasRouter.put('/sections', requireMember, requireEditor, async (req, res) => {
+  const sections = validateSections(req.body?.sections)
+  if (!sections) return res.status(400).json({ error: '섹션 정보가 올바르지 않습니다.' })
+  await prisma.workspace.update({ where: { id: req.params.workspaceId }, data: { ideaSections: sections } })
+  res.json({ sections })
+})
+
 ideasRouter.get('/', requireMember, async (req, res) => {
   const ideas = await prisma.idea.findMany({ where: { workspaceId: req.params.workspaceId } })
   res.json({ ideas: ideas.filter((idea) => !idea.removedAt).map(serialize) })

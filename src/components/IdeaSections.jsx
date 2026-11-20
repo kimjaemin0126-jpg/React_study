@@ -1,55 +1,40 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import IdeaBoard from './IdeaBoard'
 import { useIdeas } from '../hooks/useIdeas'
 import { createId } from '../utils/documentUtils'
+import { studyApi } from '../services/studyApi'
 
-const SECTIONS_KEY_PREFIX = 'folio-idea-sections-v1'
 const DEFAULT_SECTION_ID = 'default-ideas'
-
-function getSectionsKey(workspaceId) {
-  return `${SECTIONS_KEY_PREFIX}:${workspaceId}`
-}
-
-function loadSections(workspaceId) {
-  if (!workspaceId) return []
-  const raw = window.localStorage.getItem(getSectionsKey(workspaceId))
-  if (raw === null) {
-    return [{ id: DEFAULT_SECTION_ID, title: '아이디어 섹션 1' }]
-  }
-
-  const sections = JSON.parse(raw)
-  if (
-    !Array.isArray(sections) || sections.length === 0 ||
-    !sections.every((section) => section &&
-      typeof section.id === 'string' && typeof section.title === 'string') ||
-    new Set(sections.map((section) => section.id)).size !== sections.length ||
-    !sections.some((section) => section.id === DEFAULT_SECTION_ID)
-  ) {
-    throw new Error('섹션 데이터 형식이 올바르지 않습니다.')
-  }
-  return sections
-}
-
-function createSectionStore(workspaceId) {
-  try {
-    return { sections: loadSections(workspaceId), error: '', readable: true }
-  } catch {
-    return {
-      sections: [],
-      error: '섹션을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.',
-      readable: false,
-    }
-  }
-}
 
 export default function IdeaSections({ workspaceId }) {
   // 카드 저장 상태는 부모 한 곳에서 관리해 섹션 사이의 덮어쓰기를 막습니다.
   const { ideas, error, readable, loading, addIdea, updateIdea, deleteIdea, moveIdea } = useIdeas(workspaceId)
-  const [sectionStore, setSectionStore] = useState(() => createSectionStore(workspaceId))
+  const [sectionStore, setSectionStore] = useState({ sections: [], error: '', readable: true })
   const [selectedIds, setSelectedIds] = useState([])
   const [destinationId, setDestinationId] = useState('')
   const [moving, setMoving] = useState(false)
   const [moveMessage, setMoveMessage] = useState('')
+
+  // 섹션 목록을 서버에서 불러오고, 5초마다 다시 받아서 스터디 전체가 같은 섹션을 보게 함
+  useEffect(() => {
+    if (!workspaceId) return
+    let ignore = false
+    function load() {
+      studyApi.getIdeaSections(workspaceId)
+        .then(({ sections }) => {
+          if (!ignore) setSectionStore((current) => ({ ...current, sections, error: '', readable: true }))
+        })
+        .catch((err) => {
+          if (!ignore) setSectionStore((current) => ({ ...current, error: err.message, readable: false }))
+        })
+    }
+    load()
+    const timer = window.setInterval(load, 5000)
+    return () => {
+      ignore = true
+      window.clearInterval(timer)
+    }
+  }, [workspaceId])
 
   // 삭제되어 더 이상 존재하지 않는 카드는 선택 개수에서 제외
   const selectedIdeas = ideas.filter((idea) =>
@@ -61,15 +46,10 @@ export default function IdeaSections({ workspaceId }) {
 
   function saveSections(nextSections) {
     if (!canEdit) return
-    try {
-      window.localStorage.setItem(getSectionsKey(workspaceId), JSON.stringify(nextSections))
-      setSectionStore({ sections: nextSections, error: '', readable: true })
-    } catch {
-      setSectionStore({
-        ...sectionStore,
-        error: '섹션을 저장하지 못했습니다. 저장 공간을 확인해 주세요.',
-      })
-    }
+    setSectionStore((current) => ({ ...current, sections: nextSections, error: '' }))
+    studyApi.saveIdeaSections(workspaceId, nextSections).catch((err) => {
+      setSectionStore((current) => ({ ...current, error: err.message }))
+    })
   }
 
   function addSection() {

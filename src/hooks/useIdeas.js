@@ -16,6 +16,18 @@ export function useIdeas(workspaceId) {
 
   useEffect(() => { load() }, [load])
 
+  // 팀원이 추가하거나 고친 카드를 5초마다 받아옴 (탭이 보일 때만)
+  useEffect(() => {
+    if (!workspaceId) return
+    const timer = window.setInterval(() => {
+      if (window.document.visibilityState !== 'visible') return
+      studyApi.getIdeas(workspaceId)
+        .then(({ ideas }) => setStore((current) => ({ ...current, ideas, error: '' })))
+        .catch(() => {})
+    }, 5000)
+    return () => window.clearInterval(timer)
+  }, [workspaceId])
+
   async function addIdea(title, content, sectionId) {
     try {
       const { idea } = await studyApi.createIdea(workspaceId, { title, content, sectionId })

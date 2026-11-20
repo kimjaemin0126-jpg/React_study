@@ -38,7 +38,11 @@ export const studyApi = {
   revokeInvite: (workspaceId, inviteId) => request('DELETE', `/workspaces/${workspaceId}/invites/${inviteId}`),
 
   closeStudy: (workspaceId) => request('POST', `/workspaces/${workspaceId}/close`),
+  reopenStudy: (workspaceId) => request('POST', `/workspaces/${workspaceId}/reopen`),
   leaveStudy: (workspaceId) => request('POST', `/workspaces/${workspaceId}/leave`),
+
+  getIdeaSections: (workspaceId) => request('GET', `/workspaces/${workspaceId}/ideas/sections`),
+  saveIdeaSections: (workspaceId, sections) => request('PUT', `/workspaces/${workspaceId}/ideas/sections`, { sections }),
 
   acceptInvite: (code, nickname) => request('POST', `/invites/${code}/accept`, { nickname })
 }

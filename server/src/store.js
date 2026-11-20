@@ -10,7 +10,7 @@ const tables = {
 }
 
 const DEFAULTS = {
-  workspace: () => ({ content: [], docs: [], closedAt: null, lastActiveAt: new Date(), createdAt: new Date(), updatedAt: new Date() }),
+  workspace: () => ({ content: [], docs: [], ideaSections: [], closedAt: null, lastActiveAt: new Date(), createdAt: new Date(), updatedAt: new Date() }),
   member: () => ({ role: 'VIEWER', removedAt: null, createdAt: new Date() }),
   invite: () => ({ role: 'VIEWER', maxUses: null, useCount: 0, revokedAt: null, createdAt: new Date() }),
   idea: () => ({ removedAt: null, createdAt: new Date(), updatedAt: new Date() }),
@@ -68,6 +68,21 @@ function createModel(name) {
 
     count({ where }) {
       return findRows(table, where).length
+    },
+
+    // 삭제: 스터디(workspace)를 지우면 그 멤버와 초대 링크도 함께 지움
+    delete({ where }) {
+      const row = findRows(table, where)[0]
+      if (!row) return null
+      table.delete(row.id)
+      if (name === 'workspace') {
+        for (const child of [tables.member, tables.invite]) {
+          for (const item of [...child.values()]) {
+            if (item.workspaceId === row.id) child.delete(item.id)
+          }
+        }
+      }
+      return clone(row)
     },
 
     update({ where, data }) {

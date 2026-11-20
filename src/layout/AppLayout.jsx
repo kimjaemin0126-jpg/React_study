@@ -106,6 +106,12 @@ export default function AppLayout() {
           workspaceId={currentDocument.workspaceId}
           onClose={() => setShowMembers(false)}
           onClosed={() => setShowMembers(false)}
+          onDeleted={() => {
+            // 팀원이 없어서 스터디 데이터가 지워졌으므로 목록에서도 숨김
+            updateWorkspaceDocuments(currentDocument.workspaceId, { studyLeft: true })
+            setShowMembers(false)
+            navigate('/')
+          }}
           onLeft={() => {
             // 나간 스터디 문서는 목록에서 숨김 (문서 자체는 이 기기에 남김)
             updateWorkspaceDocuments(currentDocument.workspaceId, { studyLeft: true })

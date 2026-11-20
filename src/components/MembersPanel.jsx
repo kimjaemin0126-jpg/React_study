@@ -12,23 +12,25 @@ async function fetchPanel(workspaceId) {
   const study = await studyApi.getStudy(workspaceId)
   const memberList = await studyApi.getMembers(workspaceId)
   const inviteList = study.me.role === 'OWNER' ? await studyApi.getInvites(workspaceId) : { invites: [] }
-  return { myRole: study.me.role, members: memberList.members, invites: inviteList.invites }
+  return { myRole: study.me.role, members: memberList.members, invites: inviteList.invites, closed: Boolean(study.workspace.closedAt) }
 }
 
-export default function MembersPanel({ workspaceId, onClose, onClosed, onLeft }) {
+export default function MembersPanel({ workspaceId, onClose, onClosed, onDeleted, onLeft }) {
   const dialog = useDialog()
   const [myRole, setMyRole] = useState(null)
   const [members, setMembers] = useState([])
   const [invites, setInvites] = useState([])
+  const [closed, setClosed] = useState(false)
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [error, setError] = useState('')
 
   const isOwner = myRole === 'OWNER'
+  const others = members.filter((member) => member.role !== 'OWNER').length
 
   function applyPanel(data) {
     setMyRole(data.myRole)
     setMembers(data.members)
-    setInvites(data.invites)
+    setInvites(data.invites); setClosed(data.closed)
     setError('')
   }
 
@@ -49,7 +51,7 @@ export default function MembersPanel({ workspaceId, onClose, onClosed, onLeft })
           if (ignore) return
           setMyRole(data.myRole)
           setMembers(data.members)
-          setInvites(data.invites)
+          setInvites(data.invites); setClosed(data.closed)
         })
         .catch((err) => {
           if (!ignore) setError(err.message)
@@ -161,19 +163,33 @@ export default function MembersPanel({ workspaceId, onClose, onClosed, onLeft })
         </section>
       )}
 
-      {isOwner && (
+      {isOwner && !closed && (
         <section className="study-danger-section">
           <button
             type="button"
             className="study-danger-outline"
             onClick={async () => {
-              if (await dialog.confirm('팀원 모두 들어갈 수 없게 되고, 초대 링크도 모두 취소돼요. 데이터는 보관돼요.', { title: '스터디 닫기', confirmLabel: '닫기', danger: true })) {
+              if (others === 0 || await dialog.confirm('팀원이 있어요. 닫으면 팀원들은 볼 수 없고, 나중에 다시 열 수 있어요.', { title: '스터디 닫기', confirmLabel: '닫기', danger: true })) {
                 studyApi.closeStudy(workspaceId)
-                  .then(() => onClosed?.())
+                  .then((result) => (result.deleted ? onDeleted?.() : onClosed?.()))
                   .catch((err) => setError(err.message))
               }
             }}
           >스터디 닫기</button>
+        </section>
+      )}
+
+      {isOwner && closed && (
+        <section className="study-danger-section">
+          <button
+            type="button"
+            className="study-primary"
+            onClick={() => {
+              studyApi.reopenStudy(workspaceId)
+                .then(() => refresh())
+                .catch((err) => setError(err.message))
+            }}
+          >스터디 다시 열기</button>
         </section>
       )}
 

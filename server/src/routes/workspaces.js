@@ -52,7 +52,7 @@ workspacesRouter.get('/:workspaceId', requireMember, async (req, res) => {
   const me = req.member
 
   res.json({
-    workspace: { id: workspace.id, name: workspace.name, createdAt: workspace.createdAt },
+    workspace: { id: workspace.id, name: workspace.name, createdAt: workspace.createdAt, closedAt: workspace.closedAt },
     me: { id: me.id, nickname: me.nickname, role: me.role },
   })
 })
@@ -171,6 +171,13 @@ workspacesRouter.delete(
 // 남은 초대 링크를 모두 취소하고, 이후 누구도 접근할 수 없게 함 (데이터는 보관)
 workspacesRouter.post('/:workspaceId/close', requireMember, requireOwner, async (req, res) => {
   const { workspaceId } = req.params
+  // 팀원이 아무도 없으면 스터디 데이터를 서버에서 바로 지움 (다시 열 수 없음)
+  const activeCount = await prisma.member.count({ where: { workspaceId, removedAt: null } })
+  if (activeCount <= 1) {
+    await prisma.workspace.delete({ where: { id: workspaceId } })
+    return res.json({ deleted: true })
+  }
+
   const now = new Date()
 
   await prisma.$transaction([
@@ -192,6 +199,16 @@ workspacesRouter.post('/:workspaceId/leave', requireMember, async (req, res) => 
   await prisma.member.update({ where: { id: me.id }, data: { removedAt: new Date() } })
   res.clearCookie(memberCookieName(req.params.workspaceId), { path: '/' })
   res.json({ left: { id: me.id, nickname: me.nickname } })
+})
+
+// POST /api/workspaces/:workspaceId/reopen : 닫은 스터디 다시 열기 (방장만)
+workspacesRouter.post('/:workspaceId/reopen', requireMember, requireOwner, async (req, res) => {
+  const workspace = await prisma.workspace.findUnique({ where: { id: req.params.workspaceId } })
+  if (!workspace.closedAt) {
+    return res.status(409).json({ error: '닫힌 스터디가 아니에요.' })
+  }
+  await prisma.workspace.update({ where: { id: req.params.workspaceId }, data: { closedAt: null } })
+  res.json({ reopened: { id: req.params.workspaceId } })
 })
 
 // GET /api/workspaces/:workspaceId/invites : 초대 링크 목록 (방장만, 원문 코드는 제외)
