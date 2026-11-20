@@ -8,7 +8,7 @@ import { useDocumentStore } from '../hooks/useDocumentStore'
 import { studyApi } from '../services/studyApi'
 import { formatRelativeDate, getDocumentTitle, hasParentCycle } from '../utils/documentUtils'
 import { exportDocumentToPdf } from '../utils/exportPdf'
-import { toStudyDocs } from '../utils/studyDocs'
+import { collectDescendantIds, toStudyDocs } from '../utils/studyDocs'
 import DocumentSchedule from '../calendar/DocumentSchedule'
 
 // 스터디 접근을 잃었을 때 이유를 알려주는 안내 창 (401/403: 강퇴, 410: 스터디 닫힘)
@@ -131,6 +131,9 @@ export default function DocumentPage() {
 
   if (!current) return <div className="document-missing"><FileText size={24} /><h2>문서를 찾을 수 없습니다</h2><p>문서가 삭제되었거나 더 이상 존재하지 않습니다.</p><Link to="/">모든 문서 보기</Link></div>
 
+  // 스터디에서 나갔거나 내보내진 문서는 홈으로 보냄
+  if (current.studyLeft) return <Navigate to="/" replace />
+
   // 강퇴 등으로 접근을 잃으면 내 작업 화면(홈)으로 보냄
   if (access?.workspaceId === workspaceId && access.status === 'denied') {
     return <Navigate to="/" replace />
@@ -141,6 +144,7 @@ export default function DocumentPage() {
   const viewerHint = '보기 권한에서는 사용할 수 없어요'
 
   const children = activeDocuments.filter((document) => document.parentId === current.id)
+  const pdfChildren = activeDocuments.filter((document) => document.id !== current.id && collectDescendantIds(activeDocuments, current.id).has(document.id))
   const possibleParents = activeDocuments.filter((document) => document.id !== current.id && !hasParentCycle(activeDocuments, current.id, document.id))
 
   function changeTitle(value) {
@@ -168,7 +172,7 @@ export default function DocumentPage() {
             aria-expanded={calendar.isOpen}
             onClick={calendar.toggle}
           ><CalendarDays size={17} /></button>
-          <button type="button" disabled={viewerOnly} className="icon-button" title={viewerOnly ? viewerHint : "PDF로 내보내기"} aria-label="PDF로 내보내기" onClick={() => exportDocumentToPdf(current)}><Download size={16} /></button>
+          <button type="button" disabled={viewerOnly} className="icon-button" title={viewerOnly ? viewerHint : "PDF로 내보내기"} aria-label="PDF로 내보내기" onClick={() => exportDocumentToPdf(current, pdfChildren)}><Download size={16} /></button>
           <button type="button" disabled={viewerOnly} className="icon-button" title={viewerOnly ? viewerHint : "문서 복제"} aria-label="문서 복제" onClick={() => {
             const copyId = duplicateDocument(current.id)
             if (copyId) navigate(`/documents/${copyId}`)
@@ -202,7 +206,7 @@ export default function DocumentPage() {
         <DocumentEditor blocks={current.blocks} onChange={(blocks) => updateDocument(current.id, { blocks })} />
       </div>
       <section className="child-pages">
-        <div className="child-pages-heading"><h2>하위 페이지</h2><button type="button" className="text-action" onClick={() => openChildPage(current.id)}><FilePlus2 size={15} />페이지 추가</button></div>
+        <div className="child-pages-heading"><h2>하위 페이지</h2>{current.studyRole !== 'VIEWER' && <button type="button" className="text-action" onClick={() => openChildPage(current.id)}><FilePlus2 size={15} />페이지 추가</button>}</div>
         {children.length ? children.map((child) => <Link to={`/documents/${child.id}`} key={child.id} className="child-page-link"><FileText size={16} /><span>{getDocumentTitle(child)}</span><ChevronRight size={16} /></Link>) : <p className="child-empty">이 페이지에 연결된 하위 페이지가 없습니다.</p>}
       </section>
     </article>

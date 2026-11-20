@@ -17,6 +17,7 @@ export default function CalendarContent({ documentId, documents, updateDocument,
       events={current.events ?? []}
       taskPeriod={current.isTask ? current : null}
       onChange={(events) => updateDocument(current.id, { events })}
+      readOnly={current.studyRole === 'VIEWER'}
       calendar={calendar}
     />
   )

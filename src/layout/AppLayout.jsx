@@ -13,6 +13,7 @@ import MembersPanel from '../components/MembersPanel'
 import { studyApi } from '../services/studyApi'
 import { getDocumentTitle } from '../utils/documentUtils'
 import { collectDescendantIds, toStudyDocs } from '../utils/studyDocs'
+import { useStudyWatch } from '../hooks/useStudyWatch'
 
 export default function AppLayout() {
   const [templateOpen, setTemplateOpen] = useState(false)
@@ -29,7 +30,8 @@ export default function AppLayout() {
     isOpen: Boolean(tasksMatch) || (Boolean(documentMatch) && calendar.isOpen),
     isPinned: Boolean(tasksMatch),
   }
-  const { documents, activeDocuments, createDocument, updateDocument, storageError, attachStudy, updateWorkspaceDocuments } = useDocumentStore()
+  const { documents, activeDocuments, createDocument, updateDocument, storageError, attachStudy, updateWorkspaceDocuments, applyStudyRole, hideStudyForMembers } = useDocumentStore()
+  useStudyWatch({ documents, updateWorkspaceDocuments, applyStudyRole, hideStudyForMembers })
   const currentDocument = documentMatch
     ? documents.find((document) => document.id === documentMatch.params.documentId && !document.isDeleted)
     : undefined
@@ -59,6 +61,7 @@ export default function AppLayout() {
       const docs = toStudyDocs(documents.filter((document) => ids.has(document.id)).map((document) => ({ ...document, workspaceId: workspace.id })), workspace.id)
       await studyApi.saveDocument(workspace.id, { docs })
       attachStudy(currentDocument.id, workspace.id)
+      applyStudyRole(workspace.id, 'OWNER')
       setMobileSidebarOpen(false)
       setShowMembers(true)
     } catch (err) {

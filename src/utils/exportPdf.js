@@ -42,24 +42,49 @@ function blocksToHtml(blocks) {
   return parts.join('\n')
 }
 
+// 일정 목록 (날짜, 시간 순서)
+function eventsToHtml(events) {
+  if (!events?.length) return ''
+  const sorted = [...events].sort((a, b) => `${a.date} ${a.time || ''}`.localeCompare(`${b.date} ${b.time || ''}`))
+  const items = sorted.map((event) => `<li>${escapeHtml(event.date)}${event.time ? ' ' + escapeHtml(event.time) : ''} · ${escapeHtml(event.title)}</li>`)
+  return `<section class="events"><h3>일정</h3><ul>${items.join('')}</ul></section>`
+}
+
 const printStyles = `
   body { font-family: 'Malgun Gothic', sans-serif; color: #111; line-height: 1.7; margin: 0; }
-  h1.doc-title { font-size: 28px; margin: 0 0 24px; }
+  h1.doc-title { font-size: 28px; margin: 0 0 16px; }
   h1 { font-size: 24px; } h2 { font-size: 20px; } h3 { font-size: 17px; }
   p, li { font-size: 14px; margin: 4px 0; }
+  .events { margin: 12px 0 20px; padding: 10px 14px; background: #f7f7f9; border-radius: 6px; }
+  .events h3 { margin: 0 0 6px; font-size: 14px; }
+  .events ul { margin: 0; padding-left: 18px; }
+  .child-page { margin-top: 32px; padding-top: 16px; border-top: 1px solid #ddd; }
   blockquote { border-left: 3px solid #ccc; margin: 8px 0; padding-left: 12px; color: #555; }
   pre { background: #f4f4f4; padding: 12px; border-radius: 6px; white-space: pre-wrap; font-size: 13px; }
   hr { border: 0; border-top: 1px solid #ddd; margin: 16px 0; }
   @page { margin: 20mm; }
 `
 
-// 브라우저 인쇄 창을 열어 "PDF로 저장"을 선택하게 함 (숨겨진 iframe 사용)
-export function exportDocumentToPdf(doc) {
+// 문서 본문 아래에 하위 페이지들을 차례로 붙여서 인쇄 창을 엶 (숨겨진 iframe 사용)
+// doc: 대표 문서, children: 하위 문서들 (트리 순서)
+export function exportDocumentToPdf(doc, children = []) {
   const title = getDocumentTitle(doc)
+  const childrenHtml = children.map((child) => `
+    <section class="child-page">
+      <h2>${escapeHtml(getDocumentTitle(child))}</h2>
+      ${eventsToHtml(child.events)}
+      ${blocksToHtml(child.blocks)}
+    </section>`).join('')
+
   const html = `<!doctype html>
 <html lang="ko">
 <head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>${printStyles}</style></head>
-<body><h1 class="doc-title">${escapeHtml(title)}</h1>${blocksToHtml(doc.blocks)}</body>
+<body>
+  <h1 class="doc-title">${escapeHtml(title)}</h1>
+  ${eventsToHtml(doc.events)}
+  ${blocksToHtml(doc.blocks)}
+  ${childrenHtml}
+</body>
 </html>`
 
   const iframe = document.createElement('iframe')

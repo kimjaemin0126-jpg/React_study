@@ -216,6 +216,24 @@ export function useDocuments() {
     setDocuments((current) => current.map((document) => (document.workspaceId === workspaceId ? { ...document, ...changes } : document)))
   }, [])
 
+  // 내 스터디 권한(방장, 편집, 보기)을 기록 (바뀐 경우에만 반영)
+  const applyStudyRole = useCallback((workspaceId, studyRole) => {
+    setDocuments((current) => {
+      if (!current.some((document) => document.workspaceId === workspaceId && document.studyRole !== studyRole)) return current
+      return current.map((document) => (document.workspaceId === workspaceId ? { ...document, studyRole } : document))
+    })
+  }, [])
+
+  // 스터디가 닫혔을 때: 방장이 아닌 사람의 목록에서는 숨김 (방장은 그대로 남음)
+  const hideStudyForMembers = useCallback((workspaceId) => {
+    setDocuments((current) => {
+      if (!current.some((document) => document.workspaceId === workspaceId && document.studyRole !== 'OWNER' && !document.studyLeft)) return current
+      return current.map((document) => (
+        document.workspaceId === workspaceId && document.studyRole !== 'OWNER' ? { ...document, studyLeft: true } : document
+      ))
+    })
+  }, [])
+
   return {
     documents,
     activeDocuments,
@@ -230,6 +248,8 @@ export function useDocuments() {
     moveDocument,
     mergeStudyDocuments,
     attachStudy,
-    updateWorkspaceDocuments
+    updateWorkspaceDocuments,
+    applyStudyRole,
+    hideStudyForMembers
   }
 }

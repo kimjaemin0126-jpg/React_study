@@ -17,7 +17,7 @@ function TreeItem({ document, documents, onNewChild }) {
         <button type="button" className="tree-link" onClick={() => navigate(`/documents/${document.id}`)}>
           <FileText size={15} /><span>{getDocumentTitle(document)}</span>
         </button>
-        <button type="button" className="tree-add" title="하위 페이지 추가" aria-label={`${getDocumentTitle(document)} 하위 페이지 추가`} onClick={() => onNewChild(document.id)}><Plus size={14} /></button>
+        {document.studyRole !== 'VIEWER' && <button type="button" className="tree-add" title="하위 페이지 추가" aria-label={`${getDocumentTitle(document)} 하위 페이지 추가`} onClick={() => onNewChild(document.id)}><Plus size={14} /></button>}
       </div>
       {expanded && children.length > 0 && <div className="tree-children">{children.map((child) => <TreeItem key={child.id} document={child} documents={documents} onNewChild={onNewChild} />)}</div>}
     </div>

@@ -154,7 +154,7 @@ body:has(.calendar-panel) .study-panel {
 }
 
 /* 좁은 화면에서는 캘린더와 팀원 패널을 동시에 띄우지 않는다 */
-@media (max-width: 1179px) {
+@media (max-width: 1279px) {
   body:has(.calendar-panel) .study-panel {
     display: none;
   }

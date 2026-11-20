@@ -5,7 +5,7 @@ import EventForm from './EventForm'
 import { calendarMarkers, collectCalendarEntries, createEvent, entriesOnDate, formatDateLabel, sortEvents } from './calendarUtils'
 
 // 문서 안에서 여는 캘린더: 현재 문서의 일정을 보고 추가·수정·삭제한다.
-export default function CalendarPanel({ documentTitle, events, onChange, calendar, taskPeriod = null }) {
+export default function CalendarPanel({ documentTitle, events, onChange, calendar, taskPeriod = null, readOnly = false }) {
   const [editingId, setEditingId] = useState(null)
   const { selectedDate, visibleMonth, selectDate } = calendar
   const dayEvents = sortEvents(events.filter((event) => event.date === selectedDate))
@@ -48,15 +48,15 @@ export default function CalendarPanel({ documentTitle, events, onChange, calenda
               <li key={event.id} className={event.id === editingId ? 'is-editing' : ''}>
                 <span className="calendar-event-time">{event.time || '종일'}</span>
                 <span className="calendar-event-title">{event.title}</span>
-                <button type="button" className="block-delete" aria-label={`${event.title} 수정`} title="일정 수정" onClick={() => setEditingId(event.id)}><Pencil size={13} /></button>
-                <button type="button" className="block-delete" aria-label={`${event.title} 삭제`} title="일정 삭제" onClick={() => deleteEvent(event.id)}><Trash2 size={13} /></button>
+                {!readOnly && <button type="button" className="block-delete" aria-label={`${event.title} 수정`} title="일정 수정" onClick={() => setEditingId(event.id)}><Pencil size={13} /></button>}
+                {!readOnly && <button type="button" className="block-delete" aria-label={`${event.title} 삭제`} title="일정 삭제" onClick={() => deleteEvent(event.id)}><Trash2 size={13} /></button>}
               </li>
             ))}
           </ul>
         )}
         {editingEvent
           ? <EventForm key={editingEvent.id} event={editingEvent} date={selectedDate} onSubmit={saveEvent} onCancel={() => setEditingId(null)} />
-          : <EventForm key={`new-${selectedDate}`} date={selectedDate} onSubmit={addEvent} />}
+          : (readOnly ? <p className="calendar-empty">보기 권한에서는 일정을 추가할 수 없어요.</p> : <EventForm key={`new-${selectedDate}`} date={selectedDate} onSubmit={addEvent} />)}
       </section>
     </CalendarShell>
   )
