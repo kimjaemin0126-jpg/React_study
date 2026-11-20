@@ -75,6 +75,25 @@ export default function DocumentPage() {
     return () => { ignore = true }
   }, [workspaceId, documentId, updateDocument, updateWorkspaceDocuments, mergeStudyDocuments, dialog])
 
+  // 스터디의 문서 목록 전체(하위 페이지, 일정 포함)를 서버에 저장 (입력이 0.8초 멈추면 저장)
+  const studyDocs = workspaceId ? toStudyDocs(activeDocuments, workspaceId) : []
+  const studyPayload = workspaceId ? JSON.stringify({ docs: studyDocs }) : null
+  const studyJson = JSON.stringify(sortDocs(studyDocs))
+  const [savedJson, setSavedJson] = useState('') // 서버에 마지막으로 저장된 문서 목록
+  const hasUnsaved = canEdit && studyJson !== savedJson // 저장 대기 중인 내 변경이 있으면 서버 내용으로 덮어쓰지 않음
+  useEffect(() => {
+    if (!workspaceId || !canEdit || !studyPayload) return
+    const timer = window.setTimeout(() => {
+      studyApi.saveDocument(workspaceId, JSON.parse(studyPayload))
+        .then(() => {
+          setSyncError('')
+          setSavedJson(studyJson)
+        })
+        .catch((err) => setSyncError(err.message))
+    }, 800)
+    return () => window.clearTimeout(timer)
+  }, [workspaceId, canEdit, studyPayload, studyJson])
+
   // 문서를 열어둔 채로도 강퇴, 스터디 닫기가 바로 반영되도록 주기적으로 권한을 확인
   // (내용은 다시 불러오지 않아서 입력 중인 글이 지워지지 않음)
   useEffect(() => {
@@ -103,25 +122,6 @@ export default function DocumentPage() {
       window.clearInterval(timer)
     }
   }, [workspaceId, documentId, updateDocument, updateWorkspaceDocuments, mergeStudyDocuments, dialog, studyJson, hasUnsaved])
-
-  // 스터디의 문서 목록 전체(하위 페이지, 일정 포함)를 서버에 저장 (입력이 0.8초 멈추면 저장)
-  const studyDocs = workspaceId ? toStudyDocs(activeDocuments, workspaceId) : []
-  const studyPayload = workspaceId ? JSON.stringify({ docs: studyDocs }) : null
-  const studyJson = JSON.stringify(sortDocs(studyDocs))
-  const [savedJson, setSavedJson] = useState('') // 서버에 마지막으로 저장된 문서 목록
-  const hasUnsaved = canEdit && studyJson !== savedJson // 저장 대기 중인 내 변경이 있으면 서버 내용으로 덮어쓰지 않음
-  useEffect(() => {
-    if (!workspaceId || !canEdit || !studyPayload) return
-    const timer = window.setTimeout(() => {
-      studyApi.saveDocument(workspaceId, JSON.parse(studyPayload))
-        .then(() => {
-          setSyncError('')
-          setSavedJson(studyJson)
-        })
-        .catch((err) => setSyncError(err.message))
-    }, 800)
-    return () => window.clearTimeout(timer)
-  }, [workspaceId, canEdit, studyPayload, studyJson])
 
   // 문서를 새로 열거나 바꿀 때 창을 맨 위로 올림
   useLayoutEffect(() => {
