@@ -2,7 +2,7 @@ import test, { after, before } from 'node:test'
 import assert from 'node:assert/strict'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom'
 import { createServer } from 'vite'
 import { calendarMarkers, collectCalendarEntries, entriesOnDate } from '../src/calendar/calendarUtils.js'
 
@@ -45,10 +45,16 @@ test('월 경계를 넘는 기간과 종료일 없는 단일 일정을 표시한
 
 let vite
 let CalendarContent
+let TaskViews
+let DocumentContext
+let DialogContext
 before(async () => {
   // 네트워크 포트나 사용자 브라우저 저장소 없이 실제 JSX를 렌더링합니다.
   vite = await createServer({ server: { middlewareMode: true, hmr: false, watch: null }, appType: 'custom' })
   CalendarContent = (await vite.ssrLoadModule('/src/calendar/CalendarContent.jsx')).default
+  TaskViews = (await vite.ssrLoadModule('/src/components/TaskViews.jsx')).default
+  DocumentContext = (await vite.ssrLoadModule('/src/context/storeContext.js')).DocumentContext
+  DialogContext = (await vite.ssrLoadModule('/src/context/dialogContext.js')).DialogContext
 })
 after(async () => { await vite?.close() })
 
@@ -92,4 +98,35 @@ test('닫힌 달력이나 존재하지 않거나 삭제된 문서는 패널을 �
   assert.equal(render('doc-a', false), '')
   assert.equal(render('missing'), '')
   assert.equal(render('removed'), '')
+})
+
+function renderTaskViews(activeDocuments) {
+  const calendar = {
+    visibleMonth: { year: 2026, month: 10 },
+    selectDate() {}, setVisibleMonth() {},
+  }
+  return renderToStaticMarkup(createElement(DocumentContext.Provider, {
+    value: { activeDocuments, updateDocument() {} },
+  }, createElement(DialogContext.Provider, { value: {} },
+    createElement(MemoryRouter, { initialEntries: ['/tasks'] },
+      createElement(Routes, null,
+        createElement(Route, { element: createElement(Outlet, { context: { calendar } }) },
+          createElement(Route, { path: '/tasks', element: createElement(TaskViews) })))))))
+}
+
+test('타임라인에 문서 일정만 있어도 일정 없음 안내를 표시하지 않는다', () => {
+  const html = renderTaskViews([documents[0]])
+  assert.match(html, /A 회의/)
+  assert.doesNotMatch(html, /이달에 표시할 일정이 없습니다/)
+})
+
+test('타임라인에 작업 기간만 있어도 일정 없음 안내를 표시하지 않는다', () => {
+  const html = renderTaskViews([{ ...documents[2], blocks: [] }])
+  assert.match(html, /기간 작업/)
+  assert.doesNotMatch(html, /이달에 표시할 일정이 없습니다/)
+})
+
+test('작업 기간과 문서 일정이 모두 없을 때만 일정 없음 안내를 표시한다', () => {
+  const html = renderTaskViews([])
+  assert.match(html, /이달에 표시할 일정이 없습니다/)
 })

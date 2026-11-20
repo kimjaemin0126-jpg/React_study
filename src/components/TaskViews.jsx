@@ -289,7 +289,7 @@ function TimelineView({ tasks, documents, updateDocument, calendar, filter }) {
             </div>
         </div>
 
-        {visibleTasks.length === 0 && (
+        {visibleTasks.length === 0 && visibleEvents.length === 0 && (
             <p className="task-views-empty">
             이달에 표시할 일정이 없습니다.
             아래에서 날짜를 지정하거나 다른 달로 이동하세요.
@@ -324,103 +324,49 @@ export default function TaskViews() {
     // 하나의 일정 데이터를 모든 보기에서 함께 사용
     const tasks = activeDocuments.filter((document) => document.isTask)
 
-    // 처음에는 보드 탭만 표시
-    const [views, setViews] = useState(['board'])
     const [activeView, setActiveView] = useState('board')
-    const [pickerOpen, setPickerOpen] = useState(false)
     const [timelineFilter, setTimelineFilter] = useState('all')
-
-    function addView(id) {
-        setViews((current) =>
-        current.includes(id) ? current : [...current, id]
-        )
-
-        setActiveView(id)
-        setPickerOpen(false)
-    }
 
     return (
         <section className="task-views">
         <div className="task-views-toolbar">
             <nav className="task-views-tabs" aria-label="일정 표시방식">
-            {views.map((id) => {
-                const view = viewTypes.find((item) => item.id === id)
-
-                return (
+            {viewTypes.map((view) => (
                 <button
-                    key={id}
-                    type="button"
-                    aria-pressed={activeView === id}
-                    onClick={() => setActiveView(id)}
-                >
-                    {view.label}
-                </button>
-                )
-            })}
-            </nav>
-
-            <button
-            type="button"
-            className="task-views-add"
-            aria-expanded={pickerOpen}
-            onClick={() => setPickerOpen(!pickerOpen)}
-            >
-            ＋ 표시방식 추가
-            </button>
-        </div>
-
-        {pickerOpen && (
-            <div className="task-views-picker">
-            <p>추가할 표시방식을 선택하세요.</p>
-
-            {viewTypes
-                .filter((view) => !views.includes(view.id))
-                .map((view) => (
-                <button
-                    type="button"
                     key={view.id}
-                    onClick={() => addView(view.id)}
+                    type="button"
+                    aria-pressed={activeView === view.id}
+                    onClick={() => setActiveView(view.id)}
                 >
                     {view.label}
                 </button>
                 ))}
-
-            {views.length === viewTypes.length && (
-                <p>모든 표시방식을 추가했습니다.</p>
-            )}
-
-            <button type="button" onClick={() => setPickerOpen(false)}>
-                닫기
-            </button>
-            </div>
-        )}
+            </nav>
+        </div>
 
         <div hidden={activeView !== 'board'}>
             <TaskBoard />
         </div>
 
-        {views.includes('feed') && (
-            <div hidden={activeView !== 'feed'}>
+        <div hidden={activeView !== 'feed'}>
             <FeedView tasks={tasks} updateDocument={updateDocument} />
-            </div>
-        )}
+        </div>
 
-        {views.includes('timeline') && (
-            <div hidden={activeView !== 'timeline'}>
-            <div className="task-views-timeline-filters" role="group" aria-label="타임라인 일정 필터">
-              {[
-                { id: 'all', label: '전체' },
-                { id: 'tasks', label: '작업' },
-                { id: 'events', label: '문서 일정' },
-              ].map((item) => (
-                <button key={item.id} type="button" aria-pressed={timelineFilter === item.id} onClick={() => setTimelineFilter(item.id)}>
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            <TimelineView tasks={tasks} documents={activeDocuments} updateDocument={updateDocument} calendar={calendar} filter={timelineFilter} />
-            </div>
-        )}
+        <div hidden={activeView !== 'timeline'}>
+        <div className="task-views-timeline-filters" role="group" aria-label="타임라인 일정 필터">
+            {[
+            { id: 'all', label: '전체' },
+            { id: 'tasks', label: '작업' },
+            { id: 'events', label: '문서 일정' },
+            ].map((item) => (
+            <button key={item.id} type="button" aria-pressed={timelineFilter === item.id} onClick={() => setTimelineFilter(item.id)}>
+                {item.label}
+            </button>
+            ))}
+        </div>
+        <TimelineView tasks={tasks} documents={activeDocuments} updateDocument={updateDocument} calendar={calendar} filter={timelineFilter} />
+        </div>
+
         </section>
     )
 }

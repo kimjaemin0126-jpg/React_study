@@ -106,6 +106,7 @@
 }
 
 .task-board-card {
+    position: relative;
     min-width: 0;
     padding: 14px;
     border: 1px solid var(--border);
@@ -120,6 +121,7 @@
     font-size: 14px;
     font-weight: 500;
     line-height: 1.5;
+    padding-right: 28px;
     text-decoration: none;
     overflow-wrap: anywhere;
 }
@@ -131,7 +133,7 @@
 .task-board-status-field {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 18px;
@@ -249,4 +251,100 @@
         overflow-x: auto;
         padding-bottom: 12px;
     }
+}
+
+.task-board-delete {
+    position: absolute;
+    top: 12px;
+    right: 10px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease;
+}
+
+.task-board-delete:hover {
+    background: var(--hover);
+    color: var(--danger);
+}
+
+.task-board-delete:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.task-import-description {
+    margin: 0 0 16px;
+    color: var(--subtle);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.task-import-list {
+    display: grid;
+    max-height: 320px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.task-import-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    color: var(--text);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.task-import-item + .task-import-item {
+    border-top: 1px solid var(--border-soft);
+}
+
+.task-import-item:hover {
+    background: var(--hover);
+}
+
+.task-import-item input {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    margin: 0;
+    accent-color: var(--primary);
+}
+
+.task-import-item span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.task-import-empty {
+    padding: 16px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.task-import-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.task-import-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
