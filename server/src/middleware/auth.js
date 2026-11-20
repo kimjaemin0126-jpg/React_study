@@ -23,7 +23,8 @@ export async function requireMember(req, res, next) {
 
   // 방장이 닫은 스터디는 누구도 접근할 수 없음 (데이터는 남아 있음)
   const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { closedAt: true } })
-  if (workspace?.closedAt) {
+  // 방장이 닫은 스터디는 팀원에게만 막음 (방장은 자기 문서를 계속 편집할 수 있음)
+  if (workspace?.closedAt && member.role !== 'OWNER') {
     return res.status(410).json({ error: '닫힌 스터디입니다.' })
   }
   await prisma.workspace.update({ where: { id: workspaceId }, data: { lastActiveAt: new Date() } })
