@@ -14,7 +14,7 @@ const placeholders = {
   code: '코드를 입력하세요'
 }
 
-export default function BlockRenderer({ block, index, onChange, onDelete, onSplit, onMerge }) {
+export default function BlockRenderer({ block, index, listNumber, onChange, onDelete, onSplit, onMerge }) {
   const textareaRef = useRef(null)
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function BlockRenderer({ block, index, onChange, onDelete, onSpli
     <div className={`block-row block-${block.type}`}>
       <span className="block-grip" aria-hidden="true"><GripVertical size={15} /></span>
       {block.type === 'todo' && <input className="todo-checkbox" type="checkbox" aria-label="할 일 완료" checked={Boolean(block.checked)} onChange={(event) => onChange(index, { checked: event.target.checked })} />}
-      {(block.type === 'bullet' || block.type === 'numbered') && <span className="list-marker" aria-hidden="true">{block.type === 'bullet' ? '•' : `${index + 1}.`}</span>}
+      {(block.type === 'bullet' || block.type === 'numbered') && <span className="list-marker" aria-hidden="true">{block.type === 'bullet' ? '•' : `${listNumber ?? 1}.`}</span>}
       <textarea
         ref={textareaRef}
         rows={block.type === 'code' ? 3 : 1}

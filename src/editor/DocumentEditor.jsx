@@ -67,11 +67,18 @@ export default function DocumentEditor({ blocks, onChange }) {
     return () => window.removeEventListener('keydown', onShortcut)
   })
 
+  // 번호 목록은 문서의 행 번호가 아니라 번호 목록 블록끼리 1, 2, 3… 순서로 매긴다.
+  // 중간에 다른 블록이 있어도 처음부터 다시 시작하지 않고 이전 번호를 이어서 매긴다.
+  const listNumbers = blocks.reduce((numbers, block) => {
+    const count = numbers.count + (block.type === 'numbered' ? 1 : 0)
+    return { count, list: [...numbers.list, block.type === 'numbered' ? count : 0] }
+  }, { count: 0, list: [] }).list
+
   return (
     <div className="editor" ref={editorRef}>
       <div className="editor-help">텍스트에서 Enter를 누르면 새 블록이 생깁니다. 빈 블록에서 Alt + Backspace로 삭제할 수 있어요.</div>
       <div className="block-list">
-        {blocks.map((block, index) => <BlockRenderer key={block.id} block={block} index={index} onChange={updateBlock} onDelete={deleteBlock} onSplit={splitBlock} onMerge={mergeBlock} />)}
+        {blocks.map((block, index) => <BlockRenderer key={block.id} block={block} index={index} listNumber={listNumbers[index]} onChange={updateBlock} onDelete={deleteBlock} onSplit={splitBlock} onMerge={mergeBlock} />)}
       </div>
       <EditorToolbar onAddBlock={addBlock} />
     </div>

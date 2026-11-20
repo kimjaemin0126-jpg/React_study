@@ -2,17 +2,18 @@ import { useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import CalendarShell from './CalendarShell'
 import EventForm from './EventForm'
-import { calendarMarkers, collectCalendarEntries, createEvent, entriesOnDate, formatDateLabel, sortEvents } from './calendarUtils'
+import { calendarMarkers, collectCalendarEntries, createEvent, entriesOnDate, formatDateLabel, formatRangeLabel, getEventEndDate, sortEvents } from './calendarUtils'
 
 // 문서 안에서 여는 캘린더: 현재 문서의 일정을 보고 추가·수정·삭제한다.
 export default function CalendarPanel({ documentTitle, events, onChange, calendar, taskPeriod = null, readOnly = false }) {
   const [editingId, setEditingId] = useState(null)
   const { selectedDate, visibleMonth, selectDate } = calendar
-  const dayEvents = sortEvents(events.filter((event) => event.date === selectedDate))
+  // 기간 일정은 시작일~종료일 사이의 모든 날짜에 보인다.
+  const dayEvents = sortEvents(events.filter((event) => event.date <= selectedDate && selectedDate <= getEventEndDate(event)))
   const editingEvent = dayEvents.find((event) => event.id === editingId)
   const periods = taskPeriod ? collectCalendarEntries([{ ...taskPeriod, events: [] }]) : []
   const selectedPeriods = entriesOnDate(periods, selectedDate)
-  const markers = calendarMarkers([...events, ...periods], visibleMonth)
+  const markers = calendarMarkers([...events.map((event) => ({ ...event, endDate: getEventEndDate(event) })), ...periods], visibleMonth)
 
   function pickDate(key) {
     setEditingId(null)
@@ -47,7 +48,10 @@ export default function CalendarPanel({ documentTitle, events, onChange, calenda
             {dayEvents.map((event) => (
               <li key={event.id} className={event.id === editingId ? 'is-editing' : ''}>
                 <span className="calendar-event-time">{event.time || '종일'}</span>
-                <span className="calendar-event-title">{event.title}</span>
+                <span className="calendar-event-title">
+                  {event.title}
+                  {getEventEndDate(event) !== event.date && <small className="calendar-event-range">{formatRangeLabel(event.date, getEventEndDate(event))}</small>}
+                </span>
                 {!readOnly && <button type="button" className="block-delete" aria-label={`${event.title} 수정`} title="일정 수정" onClick={() => setEditingId(event.id)}><Pencil size={13} /></button>}
                 {!readOnly && <button type="button" className="block-delete" aria-label={`${event.title} 삭제`} title="일정 삭제" onClick={() => deleteEvent(event.id)}><Trash2 size={13} /></button>}
               </li>

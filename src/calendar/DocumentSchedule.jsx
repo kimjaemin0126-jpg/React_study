@@ -1,12 +1,12 @@
 import { CalendarDays, Plus } from 'lucide-react'
-import { formatDateLabel, getTodayKey, sortEvents } from './calendarUtils'
+import { formatRangeLabel, getEventEndDate, getTodayKey, sortEvents } from './calendarUtils'
 
 const MAX_VISIBLE = 3
 
 // 문서 제목 아래에 표시되는 이 문서의 다가오는 일정 요약
 export default function DocumentSchedule({ events, onOpen }) {
   const todayKey = getTodayKey()
-  const upcoming = sortEvents(events).filter((event) => event.date >= todayKey)
+  const upcoming = sortEvents(events).filter((event) => getEventEndDate(event) >= todayKey)
   const hiddenCount = upcoming.length - MAX_VISIBLE
 
   return (
@@ -14,7 +14,7 @@ export default function DocumentSchedule({ events, onOpen }) {
       <span className="document-schedule-label"><CalendarDays size={14} />일정</span>
       {upcoming.slice(0, MAX_VISIBLE).map((event) => (
         <button type="button" key={event.id} className="schedule-chip" onClick={() => onOpen(event.date)}>
-          <span>{formatDateLabel(event.date)}{event.time && ` ${event.time}`}</span>
+          <span>{formatRangeLabel(event.date, getEventEndDate(event))}{event.time && ` ${event.time}`}</span>
           <strong>{event.title}</strong>
         </button>
       ))}

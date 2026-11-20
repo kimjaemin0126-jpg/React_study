@@ -150,19 +150,21 @@
 .task-views-month {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
+    justify-content: center;
+    gap: 12px;
 }
 
 .task-views-month h3 {
     margin: 0;
+    min-width: 110px;
+    text-align: center;
     font-size: 17px;
 }
 
 .task-views-month button {
-    margin-left: 4px;
-    padding: 5px 10px;
+    padding: 5px 12px;
+    font-size: 16px;
+    line-height: 1;
     border: 1px solid var(--border);
     border-radius: 5px;
     color: var(--text);

@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
-import { collectEvents, getTodayKey, shiftMonth, toDateKey } from '../calendar/calendarUtils'
+import { collectEvents, getEventEndDate, shiftMonth, toDateKey } from '../calendar/calendarUtils'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import TaskBoard from './TaskBoard'
 import './TaskViews.css'
 
 const viewTypes = [
-    { id: 'board', label: '▥ 보드 보기' },
-    { id: 'feed', label: '▤ 피드' },
+    { id: 'board', label: '▥ 보드' },
     { id: 'timeline', label: '▦ 타임라인' },
+    { id: 'feed', label: '▤ 피드' },
 ]
 
 const statuses = [
@@ -92,7 +92,7 @@ function FeedView({ tasks, updateDocument }) {
         <div className="task-views-feed">
         {sorted.length === 0 && (
             <p className="task-views-empty">
-            아직 일정이 없습니다. 보드 보기에서 일정을 추가하세요.
+            아직 일정이 없습니다. 보드에서 일정을 추가하세요.
             </p>
         )}
 
@@ -123,7 +123,7 @@ function FeedView({ tasks, updateDocument }) {
 }
 
 function TimelineView({ tasks, documents, updateDocument, calendar, filter }) {
-    const { visibleMonth, setVisibleMonth, selectDate } = calendar
+    const { visibleMonth, setVisibleMonth } = calendar
     const { year, month } = visibleMonth
     const lastDay = new Date(year, month + 1, 0).getDate()
 
@@ -146,9 +146,10 @@ function TimelineView({ tasks, documents, updateDocument, calendar, filter }) {
 
         return task.startDate <= lastKey && end >= firstKey
     })
-    const visibleEvents = (filter === 'tasks' ? [] : collectEvents(documents)).filter(
-        (event) => event.date >= firstKey && event.date <= lastKey
-    )
+    // 문서 일정도 시작일~종료일 기간이 이달과 겹치면 표시
+    const visibleEvents = (filter === 'tasks' ? [] : collectEvents(documents))
+        .map((event) => ({ ...event, endDate: getEventEndDate(event) }))
+        .filter((event) => event.date <= lastKey && event.endDate >= firstKey)
 
     function changeMonth(offset) {
         setVisibleMonth((current) => shiftMonth(current, offset))
@@ -156,30 +157,27 @@ function TimelineView({ tasks, documents, updateDocument, calendar, filter }) {
 
     return (
         <div className="task-views-timeline">
+        {/* 월 이동: 이전 달 / 다음 달 버튼으로 넘겨 본다 */}
         <div className="task-views-month">
-            <h3>{year}년 {month + 1}월</h3>
-
-            <div>
             <button
                 type="button"
                 aria-label="이전 달"
+                title="이전 달"
                 onClick={() => changeMonth(-1)}
             >
                 ‹
             </button>
 
-            <button type="button" onClick={() => selectDate(getTodayKey())}>
-                오늘
-            </button>
+            <h3>{year}년 {month + 1}월</h3>
 
             <button
                 type="button"
                 aria-label="다음 달"
+                title="다음 달"
                 onClick={() => changeMonth(1)}
             >
                 ›
             </button>
-            </div>
         </div>
 
         <p className="task-views-meta">
@@ -265,7 +263,8 @@ function TimelineView({ tasks, documents, updateDocument, calendar, filter }) {
                 )
             })}
             {visibleEvents.map((event) => {
-                const day = Number(event.date.slice(-2))
+                const startDay = Number((event.date < firstKey ? firstKey : event.date).slice(-2))
+                const endDay = Number((event.endDate > lastKey ? lastKey : event.endDate).slice(-2))
                 return (
                 <div className="task-views-timeline-row" key={`${event.documentId}:${event.id}`}>
                     <Link className="task-views-name" to={`/documents/${event.documentId}`}>
@@ -277,8 +276,8 @@ function TimelineView({ tasks, documents, updateDocument, calendar, filter }) {
                     <Link
                         to={`/documents/${event.documentId}`}
                         className="task-views-bar task-views-event"
-                        style={{ gridColumn: `${day} / ${day + 1}`, gridRow: 1 }}
-                        aria-label={`${event.title}, ${event.date}${event.time ? ` ${event.time}` : ''}`}
+                        style={{ gridColumn: `${startDay} / ${endDay + 1}`, gridRow: 1 }}
+                        aria-label={`${event.title}, ${event.date}${event.endDate !== event.date ? `부터 ${event.endDate}까지` : ''}${event.time ? ` ${event.time}` : ''}`}
                     >
                         {event.time || '종일'} · {event.title}
                     </Link>
