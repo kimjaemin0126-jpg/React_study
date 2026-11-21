@@ -18,6 +18,7 @@ const {
     activeDocuments,
     createDocument,
     updateDocument,
+    moveToTrash,
 } = useDocumentStore()
 
 const dialog = useDialog()
@@ -27,6 +28,10 @@ const [addingStatus, setAddingStatus] = useState(null)
 const [draftTitle, setDraftTitle] = useState('')
 const [draftStartDate, setDraftStartDate] = useState('')
 const [draftEndDate, setDraftEndDate] = useState('')
+
+// 드래그 중인 카드와, 지금 카드가 올라가 있는 열의 상태
+const [draggingId, setDraggingId] = useState(null)
+const [dropStatus, setDropStatus] = useState(null)
 
 const [importOpen, setImportOpen] = useState(false)
 const [selectedDocumentIds, setSelectedDocumentIds] = useState([])
@@ -74,19 +79,43 @@ function addTask(event) {
     closeForm()
     }
 
-async function removeFromBoard(task) {
+// 카드 삭제: 문서(하위 문서 포함)를 휴지통으로 옮겨서 문서 목록과 일정에서도 함께 사라지게 함
+async function deleteTask(task) {
     const confirmed = await dialog.confirm(
-        `"${getDocumentTitle(task)}" 문서를 작업 보드에서 제거할까요? 원본 문서와 내용, 날짜는 유지됩니다.`,
+        `"${getDocumentTitle(task)}" 문서와 하위 문서를 휴지통으로 이동할까요?`,
         {
-        title: '보드에서 제거',
-        confirmLabel: '제거',
+        title: '작업 삭제',
+        confirmLabel: '휴지통으로 이동',
+        danger: true,
         },
     )
 
     if (!confirmed) return
 
-    updateDocument(task.id, { isTask: false })
+    moveToTrash(task.id)
 }
+// 드래그로 카드를 다른 열에 놓으면 그 열의 상태로 바뀜
+function handleDragStart(event, task) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', task.id)
+    setDraggingId(task.id)
+}
+
+function handleDragEnd() {
+    setDraggingId(null)
+    setDropStatus(null)
+}
+
+function handleDrop(event, status) {
+    event.preventDefault()
+    const id = event.dataTransfer.getData('text/plain')
+    const task = tasks.find((item) => item.id === id)
+    setDropStatus(null)
+    setDraggingId(null)
+    if (!task || (task.taskStatus ?? 'todo') === status) return
+    updateDocument(task.id, { taskStatus: status })
+}
+
 function openImport() {
     closeForm()
     setSelectedDocumentIds([])
@@ -148,8 +177,17 @@ return (
             return (
                 <section
                     key={column.id}
-                    className={`task-board-column task-board-${column.color}`}
+                    className={`task-board-column task-board-${column.color}${dropStatus === column.id ? ' is-drop-target' : ''}`}
                     aria-label={column.label}
+                    onDragOver={(event) => {
+                        event.preventDefault()
+                        event.dataTransfer.dropEffect = 'move'
+                        if (dropStatus !== column.id) setDropStatus(column.id)
+                    }}
+                    onDragLeave={(event) => {
+                        if (!event.currentTarget.contains(event.relatedTarget)) setDropStatus(null)
+                    }}
+                    onDrop={(event) => handleDrop(event, column.id)}
             >
                 <div className="task-board-column-header">
                     <h3 className="task-board-status">
@@ -164,7 +202,14 @@ return (
 
                 <div className="task-board-cards">
                     {columnTasks.map((task) => (
-                    <article className="task-board-card" key={task.id}>
+                    <article
+                        className={`task-board-card${draggingId === task.id ? ' is-dragging' : ''}`}
+                        key={task.id}
+                        draggable
+                        onDragStart={(event) => handleDragStart(event, task)}
+                        onDragEnd={handleDragEnd}
+                        title="드래그해서 다른 열로 옮기면 상태가 바뀝니다"
+                    >
                         <Link
                         className="task-board-card-title"
                         to={`/documents/${task.id}`}
@@ -172,30 +217,12 @@ return (
                         {task.title.trim() || '제목 없음'}
                         </Link>
 
-                        <label className="task-board-status-field">
-
-                        <select
-                            aria-label={`${task.title || '제목 없음'} 상태 변경`}
-                            value={task.taskStatus ?? 'todo'}
-                            onChange={(event) =>
-                            updateDocument(task.id, {
-                                taskStatus: event.target.value,
-                            })
-                            }
-                        >
-                            {columns.map((option) => (
-                            <option key={option.id} value={option.id}>
-                                {option.label}
-                            </option>
-                            ))}
-                        </select>
-                        </label>
                         <button
                             type="button"
                             className="task-board-delete"
-                            title="보드에서 제거"
-                            aria-label={`${task.title || '제목 없음'} 보드에서 제거`}
-                            onClick={() => removeFromBoard(task)}
+                            title="작업 삭제"
+                            aria-label={`${task.title || '제목 없음'} 삭제`}
+                            onClick={() => deleteTask(task)}
                             >
                             <X size={15} />
                         </button>

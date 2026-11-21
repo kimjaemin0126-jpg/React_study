@@ -727,6 +727,17 @@ display: none;
   font-size: 12px;
 }
 
+.document-task-status {
+  margin-top: 10px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 12px;
+  cursor: pointer;
+}
+
 .editor {
   margin-top: 34px;
 }
@@ -1420,14 +1431,25 @@ display: none;
   border-top: 0;
 }
 
+/* 선택 체크박스는 행의 오른쪽 끝, 마지막 수정 시간과 같은 높이에 둔다 */
 .document-list-selectable .document-bulk-row {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
+  display: flex;
   align-items: center;
 }
 
+.document-list-selectable .document-bulk-row > .document-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.document-list-selectable .document-selection-checkbox {
+  order: 2;
+  flex: 0 0 auto;
+  margin: 0 12px 0 8px;
+}
+
 .document-list-selectable .list-header {
-  padding-left: 44px;
+  padding-right: 44px;
 }
 
 /* 작은 체크박스 */
@@ -1473,4 +1495,11 @@ display: none;
 
 .document-selection-toolbar .document-bulk-delete {
   color: var(--danger);
+}
+
+/* 사이드바: 그룹 스터디 문서 표시 아이콘 */
+.tree-study-icon {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--muted);
 }

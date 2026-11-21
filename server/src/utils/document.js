@@ -25,6 +25,7 @@ export function sanitizeBlocks(blocks) {
 }
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+const TASK_STATUSES = ['todo', 'doing', 'done']
 
 // 일정은 잘못된 항목만 빼고 나머지를 저장 (한 개 때문에 전체 저장이 막히지 않도록)
 function sanitizeEvents(events) {
@@ -76,6 +77,8 @@ export function sanitizeDocs(docs) {
       blocks,
       events: sanitizeEvents(doc.events),
       isTask: doc.isTask === true,
+      // 작업 보드 상태: 허용된 값만 저장하고, 그 밖은 '시작 전'으로 맞춤
+      taskStatus: TASK_STATUSES.includes(doc.taskStatus) ? doc.taskStatus : 'todo',
       startDate,
       endDate,
       status: typeof doc.status === 'string' && doc.status.length <= 20 ? doc.status : null,

@@ -24,6 +24,12 @@ export default function Header({ onOpenSidebar }) {
     window.addEventListener('keydown', handleShortcut)
     return () => window.removeEventListener('keydown', handleShortcut)
   }, [])
+  // 검색 창을 닫을 때 입력한 검색어도 함께 지워서, 다시 열거나 다른 화면으로 가도 남지 않게 함
+  function closeSearch() {
+    setSearchOpen(false)
+    setQuery('')
+  }
+
   const results = query.trim()
     ? activeDocuments.filter((document) => `${document.title} ${document.blocks.map((block) => block.content).join(' ')}`.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 8)
     : []
@@ -48,20 +54,19 @@ export default function Header({ onOpenSidebar }) {
       </div>
       {searchOpen && (
         <div className="search-layer" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setSearchOpen(false)
+          if (event.target === event.currentTarget) closeSearch()
         }}>
           <section className="search-dialog" role="dialog" aria-modal="true" aria-label="문서 검색">
             <div className="search-field"><Search size={18} /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="문서 제목과 본문 검색..." onKeyDown={(event) => {
-              if (event.key === 'Escape') setSearchOpen(false)
-            }} /><button type="button" className="icon-button" aria-label="검색 닫기" onClick={() => setSearchOpen(false)}><X size={17} /></button></div>
+              if (event.key === 'Escape') closeSearch()
+            }} /><button type="button" className="icon-button" aria-label="검색 닫기" onClick={closeSearch}><X size={17} /></button></div>
             <div className="search-results">
               {!query.trim() && <p className="search-hint">제목과 본문에서 문서를 찾아보세요.</p>}
               {query.trim() && results.length === 0 && <p className="search-hint">검색 결과가 없습니다.</p>}
               {results.map((document) => (
                 <button type="button" key={document.id} onClick={() => {
                   navigate(`/documents/${document.id}`)
-                  setSearchOpen(false)
-                  setQuery('')
+                  closeSearch()
                 }}>
                   <Search size={15} /><span>{getDocumentTitle(document)}</span>
                 </button>

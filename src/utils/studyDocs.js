@@ -27,6 +27,7 @@ export function toStudyDocs(documents, workspaceId) {
     blocks: document.blocks,
     events: document.events ?? [],
     isTask: Boolean(document.isTask),
+    taskStatus: document.taskStatus ?? 'todo',
     startDate: document.startDate ?? null,
     endDate: document.endDate ?? null,
     status: document.status ?? null,

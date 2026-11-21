@@ -10,7 +10,7 @@ const tables = {
 }
 
 const DEFAULTS = {
-  workspace: () => ({ content: [], docs: [], ideaSections: [], closedAt: null, lastActiveAt: new Date(), createdAt: new Date(), updatedAt: new Date() }),
+  workspace: () => ({ content: [], docs: [], closedAt: null, lastActiveAt: new Date(), createdAt: new Date(), updatedAt: new Date() }),
   member: () => ({ role: 'VIEWER', removedAt: null, createdAt: new Date() }),
   invite: () => ({ role: 'VIEWER', maxUses: null, useCount: 0, revokedAt: null, createdAt: new Date() }),
   idea: () => ({ removedAt: null, createdAt: new Date(), updatedAt: new Date() }),

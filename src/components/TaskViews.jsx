@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { collectEvents, getEventEndDate, shiftMonth, toDateKey } from '../calendar/calendarUtils'
 import { useDocumentStore } from '../hooks/useDocumentStore'
@@ -122,10 +122,30 @@ function FeedView({ tasks, updateDocument }) {
     )
 }
 
-function TimelineView({ tasks, documents, updateDocument, calendar, filter }) {
+function TimelineView({ tasks, documents, updateDocument, calendar, filter, isActive }) {
     const { visibleMonth, setVisibleMonth } = calendar
     const { year, month } = visibleMonth
     const lastDay = new Date(year, month + 1, 0).getDate()
+    const scrollRef = useRef(null)
+
+    // 탭이 열리거나 달이 바뀔 때, 이번 달이면 오늘 날짜가 가로 스크롤의 가운데에 오도록 이동
+    // (다른 달이면 처음으로 이동). 숨겨진 상태에서는 위치를 잡을 수 없어서 isActive를 함께 확인
+    useEffect(() => {
+        const container = scrollRef.current
+        if (!isActive || !container) return
+
+        const todayEl = container.querySelector('.task-views-day.is-today')
+        if (!todayEl) {
+            container.scrollLeft = 0
+            return
+        }
+
+        const containerRect = container.getBoundingClientRect()
+        const todayRect = todayEl.getBoundingClientRect()
+        const todayCenter = todayRect.left - containerRect.left + container.scrollLeft + todayRect.width / 2
+
+        container.scrollLeft = Math.max(0, todayCenter - container.clientWidth / 2)
+    }, [isActive, year, month])
 
     const days = Array.from(
         { length: lastDay },
@@ -185,6 +205,7 @@ function TimelineView({ tasks, documents, updateDocument, calendar, filter }) {
         </p>
 
         <div
+            ref={scrollRef}
             className="task-views-scroll"
             tabIndex={0}
             role="region"
@@ -363,7 +384,7 @@ export default function TaskViews() {
             </button>
             ))}
         </div>
-        <TimelineView tasks={tasks} documents={activeDocuments} updateDocument={updateDocument} calendar={calendar} filter={timelineFilter} />
+        <TimelineView tasks={tasks} documents={activeDocuments} updateDocument={updateDocument} calendar={calendar} filter={timelineFilter} isActive={activeView === 'timeline'} />
         </div>
 
         </section>

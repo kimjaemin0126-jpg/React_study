@@ -12,7 +12,7 @@ async function fetchPanel(workspaceId) {
   const study = await studyApi.getStudy(workspaceId)
   const memberList = await studyApi.getMembers(workspaceId)
   const inviteList = study.me.role === 'OWNER' ? await studyApi.getInvites(workspaceId) : { invites: [] }
-  return { myRole: study.me.role, members: memberList.members, invites: inviteList.invites, closed: Boolean(study.workspace.closedAt) }
+  return { myRole: study.me.role, members: memberList.members, invites: inviteList.invites }
 }
 
 export default function MembersPanel({ workspaceId, onClose, onClosed, onDeleted, onLeft }) {
@@ -20,7 +20,6 @@ export default function MembersPanel({ workspaceId, onClose, onClosed, onDeleted
   const [myRole, setMyRole] = useState(null)
   const [members, setMembers] = useState([])
   const [invites, setInvites] = useState([])
-  const [closed, setClosed] = useState(false)
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [error, setError] = useState('')
 
@@ -30,7 +29,7 @@ export default function MembersPanel({ workspaceId, onClose, onClosed, onDeleted
   function applyPanel(data) {
     setMyRole(data.myRole)
     setMembers(data.members)
-    setInvites(data.invites); setClosed(data.closed)
+    setInvites(data.invites)
     setError('')
   }
 
@@ -51,7 +50,7 @@ export default function MembersPanel({ workspaceId, onClose, onClosed, onDeleted
           if (ignore) return
           setMyRole(data.myRole)
           setMembers(data.members)
-          setInvites(data.invites); setClosed(data.closed)
+          setInvites(data.invites)
         })
         .catch((err) => {
           if (!ignore) setError(err.message)
@@ -163,7 +162,7 @@ export default function MembersPanel({ workspaceId, onClose, onClosed, onDeleted
         </section>
       )}
 
-      {isOwner && !closed && (
+      {isOwner && (
         <section className="study-danger-section">
           <button
             type="button"
@@ -176,20 +175,6 @@ export default function MembersPanel({ workspaceId, onClose, onClosed, onDeleted
               }
             }}
           >스터디 닫기</button>
-        </section>
-      )}
-
-      {isOwner && closed && (
-        <section className="study-danger-section">
-          <button
-            type="button"
-            className="study-primary"
-            onClick={() => {
-              studyApi.reopenStudy(workspaceId)
-                .then(() => refresh())
-                .catch((err) => setError(err.message))
-            }}
-          >스터디 다시 열기</button>
         </section>
       )}
 

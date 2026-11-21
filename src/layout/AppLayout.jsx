@@ -30,7 +30,7 @@ export default function AppLayout() {
     isOpen: Boolean(tasksMatch) || (Boolean(documentMatch) && calendar.isOpen),
     isPinned: Boolean(tasksMatch),
   }
-  const { documents, activeDocuments, createDocument, updateDocument, storageError, attachStudy, updateWorkspaceDocuments, applyStudyRole, hideStudyForMembers } = useDocumentStore()
+  const { documents, activeDocuments, createDocument, updateDocument, storageError, attachStudy, updateWorkspaceDocuments, applyStudyRole, hideStudyForMembers, detachStudy } = useDocumentStore()
   useStudyWatch({ documents, updateWorkspaceDocuments, applyStudyRole, hideStudyForMembers })
   const currentDocument = documentMatch
     ? documents.find((document) => document.id === documentMatch.params.documentId && !document.isDeleted)
@@ -105,12 +105,15 @@ export default function AppLayout() {
         <MembersPanel
           workspaceId={currentDocument.workspaceId}
           onClose={() => setShowMembers(false)}
-          onClosed={() => setShowMembers(false)}
-          onDeleted={() => {
-            // 팀원이 없어서 스터디 데이터가 지워졌으므로 목록에서도 숨김
-            updateWorkspaceDocuments(currentDocument.workspaceId, { studyLeft: true })
+          onClosed={() => {
+            // 스터디를 닫으면 문서는 내용을 그대로 두고 일반 문서가 됨
+            detachStudy(currentDocument.workspaceId)
             setShowMembers(false)
-            navigate('/')
+          }}
+          onDeleted={() => {
+            // 팀원이 없어 스터디가 지워져도 문서 내용은 일반 문서로 남김
+            detachStudy(currentDocument.workspaceId)
+            setShowMembers(false)
           }}
           onLeft={() => {
             // 나간 스터디 문서는 목록에서 숨김 (문서 자체는 이 기기에 남김)

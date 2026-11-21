@@ -182,6 +182,7 @@ export function useDocuments() {
           blocks: remote.blocks,
           events: remote.events ?? [],
           isTask: remote.isTask ?? false,
+          taskStatus: remote.taskStatus ?? 'todo',
           startDate: remote.startDate ?? null,
           endDate: remote.endDate ?? null,
           status: remote.status ?? null,
@@ -234,6 +235,15 @@ export function useDocuments() {
     })
   }, [])
 
+  // 스터디를 닫았거나 팀원이 없어 지워졌을 때: 문서 내용은 그대로 두고 일반 문서로 되돌림
+  const detachStudy = useCallback((workspaceId) => {
+    setDocuments((current) => current.map((document) => (
+      document.workspaceId === workspaceId
+        ? { ...document, workspaceId: null, studyRole: null, studyLeft: false }
+        : document
+    )))
+  }, [])
+
   return {
     documents,
     activeDocuments,
@@ -250,6 +260,7 @@ export function useDocuments() {
     attachStudy,
     updateWorkspaceDocuments,
     applyStudyRole,
-    hideStudyForMembers
+    hideStudyForMembers,
+    detachStudy
   }
 }

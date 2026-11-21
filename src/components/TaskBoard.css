@@ -348,3 +348,17 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* 드래그로 카드 옮기기: 놓을 열 강조, 끌고 있는 카드 흐리게 */
+.task-board-card {
+    cursor: grab;
+}
+
+.task-board-card.is-dragging {
+    opacity: 0.4;
+}
+
+.task-board-column.is-drop-target {
+    outline: 2px dashed currentColor;
+    outline-offset: -4px;
+}

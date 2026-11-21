@@ -1,7 +1,7 @@
 import { useDialog } from '../context/dialogContext'
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { CalendarDays, ChevronRight, Copy, Download, FilePlus2, FileText, MoreHorizontal, Star, Trash2, UserPlus, Users } from 'lucide-react'
+import { CalendarDays, ChevronRight, Copy, Download, FilePlus2, FileText, Lightbulb, MoreHorizontal, Star, Trash2, UserPlus, Users } from 'lucide-react'
 import DocumentEditor from '../editor/DocumentEditor'
 import { createBlock } from '../editor/blockTypes'
 import { useDocumentStore } from '../hooks/useDocumentStore'
@@ -10,6 +10,8 @@ import { formatRelativeDate, getDocumentTitle, hasParentCycle } from '../utils/d
 import { exportDocumentToPdf } from '../utils/exportPdf'
 import { collectDescendantIds, toStudyDocs } from '../utils/studyDocs'
 import DocumentSchedule from '../calendar/DocumentSchedule'
+import IdeaImportModal from '../common/IdeaImportModal'
+import { ideasToBlocks } from '../utils/ideaBlocks'
 
 // 스터디 접근을 잃었을 때 이유를 알려주는 안내 창 (401/403: 강퇴, 410: 스터디 닫힘)
 // 401/403은 강퇴 등으로 접근을 잃은 경우라서 홈으로 보냄 (닫힌 스터디는 문서에 남김)
@@ -45,6 +47,7 @@ export default function DocumentPage() {
   const workspaceId = current?.workspaceId ?? null
   const [access, setAccess] = useState(null) // { workspaceId, status: 'ok' | 'denied', myRole, message }
   const [syncError, setSyncError] = useState('')
+  const [ideaImportOpen, setIdeaImportOpen] = useState(false)
   const accessReady = workspaceId !== null && access?.workspaceId === workspaceId && access.status === 'ok'
   const canEdit = accessReady && ['OWNER', 'EDITOR'].includes(access.myRole)
   const inert = workspaceId !== null && !canEdit
@@ -159,6 +162,7 @@ export default function DocumentPage() {
         <span><ChevronRight size={14} />{getDocumentTitle(current)}</span>
         <div className="document-actions">
           <button type="button" disabled={viewerOnly} className={`icon-button ${current.isFavorite ? 'active-favorite' : ''}`} title={viewerOnly ? viewerHint : (current.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가')} aria-label={current.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'} onClick={() => updateDocument(current.id, { isFavorite: !current.isFavorite })}><Star size={17} fill={current.isFavorite ? 'currentColor' : 'none'} /></button>
+          <button type="button" className="icon-button" disabled={viewerOnly} title={viewerOnly ? viewerHint : "아이디어 가져오기"} aria-label="아이디어 가져오기" onClick={() => setIdeaImportOpen(true)}><Lightbulb size={16} /></button>
           {current.workspaceId ? (
             <button type="button" className="icon-button" title="팀원" aria-label="팀원" onClick={toggleMembers}><Users size={16} /></button>
           ) : (
@@ -197,10 +201,31 @@ export default function DocumentPage() {
       </div>
       {isClosed && <p className="study-warning">스터디가 닫혔어요. 문서는 그대로 남아 있지만 더 이상 편집할 수 없어요.</p>}
       <div className="document-meta"><FileText size={15} /><span>마지막 수정 {formatRelativeDate(current.updatedAt)}</span></div>
-      {access?.myRole === 'VIEWER' && <p className="study-warning">보기 전용 문서예요. 편집은 방장이나 편집자만 할 수 있어요.</p>}
+      {workspaceId !== null && access?.workspaceId === workspaceId && access.myRole === 'VIEWER' && <p className="study-warning">보기 전용 문서예요. 편집은 방장이나 편집자만 할 수 있어요.</p>}
       {syncError && <p className="study-error" role="alert">서버에 저장하지 못했어요: {syncError}</p>}
+      {ideaImportOpen && (
+        <IdeaImportModal
+          workspaceId={current.workspaceId ?? null}
+          onClose={() => setIdeaImportOpen(false)}
+          onImport={(picked, author) => {
+            updateDocument(current.id, { blocks: [...current.blocks, ...ideasToBlocks(picked, author)] })
+            setIdeaImportOpen(false)
+          }}
+        />
+      )}
       <div inert={inert}>
       <input className="document-title-input" value={current.title} placeholder="제목 없음" onChange={(event) => changeTitle(event.target.value)} aria-label="문서 제목" />
+      {/* 작업 상태: 고르면 작업 보드에도 바로 반영됨 */}
+      <select
+        className="document-task-status"
+        value={current.taskStatus ?? 'todo'}
+        aria-label="작업 상태"
+        onChange={(event) => updateDocument(current.id, { taskStatus: event.target.value, isTask: true })}
+      >
+        <option value="todo">시작 전</option>
+        <option value="doing">진행 중</option>
+        <option value="done">완료</option>
+      </select>
       <div className="document-subtitle">{current.title.trim() ? '나만의 생각과 지식을 정리해 보세요.' : '제목 없음'}</div>
       <DocumentSchedule events={current.events ?? []} onOpen={calendar.open} />
         <DocumentEditor blocks={current.blocks} onChange={(blocks) => updateDocument(current.id, { blocks })} />

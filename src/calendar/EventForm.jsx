@@ -3,9 +3,15 @@ import { getEventEndDate } from './calendarUtils'
 
 // event가 있으면 수정 모드, 없으면 date 날짜에 새 일정을 추가하는 모드로 동작한다.
 // 시작일~종료일을 고를 수 있고, 종료일을 시작일과 같게 두면 하루 일정이다.
-export default function EventForm({ date, event, onSubmit, onCancel }) {
+// 시간 대신 문서의 작업 상태(시작 전·진행 중·완료)를 고르며, 작업 보드에 그대로 반영된다.
+const TASK_STATUS_OPTIONS = [
+  { id: 'todo', label: '시작 전' },
+  { id: 'doing', label: '진행 중' },
+  { id: 'done', label: '완료' },
+]
+
+export default function EventForm({ date, event, taskStatus = 'todo', onTaskStatusChange, onSubmit, onCancel }) {
   const [title, setTitle] = useState(event?.title ?? '')
-  const [time, setTime] = useState(event?.time ?? '')
   const [startDate, setStartDate] = useState(event?.date ?? date)
   const [endDate, setEndDate] = useState(event ? getEventEndDate(event) : date)
   const canSubmit = Boolean(title.trim() && startDate && endDate && endDate >= startDate)
@@ -19,11 +25,8 @@ export default function EventForm({ date, event, onSubmit, onCancel }) {
   function handleSubmit(submitEvent) {
     submitEvent.preventDefault()
     if (!canSubmit) return
-    onSubmit({ title: title.trim(), date: startDate, endDate, time })
-    if (!event) {
-      setTitle('')
-      setTime('')
-    }
+    onSubmit({ title: title.trim(), date: startDate, endDate })
+    if (!event) setTitle('')
   }
 
   return (
@@ -41,7 +44,11 @@ export default function EventForm({ date, event, onSubmit, onCancel }) {
         </label>
       </div>
       <div className="calendar-form-row">
-        <input type="time" value={time} aria-label="일정 시간 (비워두면 종일)" title="비워두면 종일 일정" onChange={(changeEvent) => setTime(changeEvent.target.value)} />
+        <select value={taskStatus} aria-label="작업 상태" onChange={(changeEvent) => onTaskStatusChange?.(changeEvent.target.value)}>
+          {TASK_STATUS_OPTIONS.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
+          ))}
+        </select>
       </div>
       <div className="calendar-form-actions">
         {event && <button type="button" className="button" onClick={onCancel}>취소</button>}

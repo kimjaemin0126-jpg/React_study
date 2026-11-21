@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { prisma } from '../db.js'
 import { STUDY_MAX_MEMBERS } from '../config.js'
 import { setMemberCookie } from '../utils/cookie.js'
+import { findMyMemberships } from '../utils/membership.js'
 import { generateToken, hashToken } from '../utils/token.js'
 
 export const invitesRouter = Router()
@@ -13,6 +14,12 @@ invitesRouter.post('/:code/accept', async (req, res) => {
 
   if (!nickname || nickname.length > 20) {
     return res.status(400).json({ error: '닉네임은 1~20자로 입력해주세요.' })
+  }
+
+  // 참여 중이거나 개설한 스터디는 전체 합쳐서 한 개만 가능 (닫힌 스터디는 개수에서 뺌)
+  const memberships = await findMyMemberships(req)
+  if (memberships.some(({ workspace }) => !workspace.closedAt)) {
+    return res.status(409).json({ error: '이미 참여 중인 스터디가 있어요. 나가거나 닫은 뒤에 참여할 수 있어요.' })
   }
 
   // 조회, 검사, 사용 횟수 증가, 멤버 생성을 하나의 트랜잭션으로 묶음

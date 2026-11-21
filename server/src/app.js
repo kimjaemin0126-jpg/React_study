@@ -3,7 +3,6 @@ import express from 'express'
 import { rateLimit } from 'express-rate-limit'
 import { healthRouter } from './routes/health.js'
 import { invitesRouter } from './routes/invites.js'
-import { ideasRouter } from './routes/ideas.js'
 import { workspacesRouter } from './routes/workspaces.js'
 
 export const app = express()
@@ -40,7 +39,6 @@ app.use('/api/health', healthRouter)
 app.post('/api/workspaces', strictLimiter)
 app.post('/api/invites/:code/accept', strictLimiter)
 app.use('/api/workspaces', workspacesRouter)
-app.use('/api/workspaces/:workspaceId/ideas', ideasRouter)
 app.use('/api/invites', invitesRouter)
 
 app.use((req, res) => {

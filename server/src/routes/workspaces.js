@@ -4,6 +4,7 @@ import { INVITE_EXPIRES_HOURS, INVITE_MAX_USES } from '../config.js'
 import { requireEditor, requireMember, requireOwner } from '../middleware/auth.js'
 import { sanitizeBlocks, sanitizeDocs } from '../utils/document.js'
 import { memberCookieName, setMemberCookie } from '../utils/cookie.js'
+import { findMyMemberships } from '../utils/membership.js'
 import { generateToken, hashToken } from '../utils/token.js'
 
 export const workspacesRouter = Router()
@@ -20,6 +21,12 @@ workspacesRouter.post('/', async (req, res) => {
   }
   if (!nickname || nickname.length > 20) {
     return res.status(400).json({ error: '닉네임은 1~20자로 입력해주세요.' })
+  }
+
+  // 참여 중이거나 개설한 스터디는 전체 합쳐서 한 개만 가능 (닫힌 스터디는 개수에서 뺌)
+  const memberships = await findMyMemberships(req)
+  if (memberships.some(({ workspace }) => !workspace.closedAt)) {
+    return res.status(409).json({ error: '이미 참여 중인 스터디가 있어요. 스터디는 한 개만 만들 수 있어요.' })
   }
 
   const token = generateToken()
@@ -199,16 +206,6 @@ workspacesRouter.post('/:workspaceId/leave', requireMember, async (req, res) => 
   await prisma.member.update({ where: { id: me.id }, data: { removedAt: new Date() } })
   res.clearCookie(memberCookieName(req.params.workspaceId), { path: '/' })
   res.json({ left: { id: me.id, nickname: me.nickname } })
-})
-
-// POST /api/workspaces/:workspaceId/reopen : 닫은 스터디 다시 열기 (방장만)
-workspacesRouter.post('/:workspaceId/reopen', requireMember, requireOwner, async (req, res) => {
-  const workspace = await prisma.workspace.findUnique({ where: { id: req.params.workspaceId } })
-  if (!workspace.closedAt) {
-    return res.status(409).json({ error: '닫힌 스터디가 아니에요.' })
-  }
-  await prisma.workspace.update({ where: { id: req.params.workspaceId }, data: { closedAt: null } })
-  res.json({ reopened: { id: req.params.workspaceId } })
 })
 
 // GET /api/workspaces/:workspaceId/invites : 초대 링크 목록 (방장만, 원문 코드는 제외)

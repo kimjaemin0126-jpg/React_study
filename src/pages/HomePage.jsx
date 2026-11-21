@@ -3,10 +3,12 @@ import { Link, useOutletContext } from 'react-router-dom'
 import { FileText, Plus } from 'lucide-react'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import {
-  collectCalendarEntries,
+  collectEvents,
   entriesOnDate,
   formatDateLabel,
+  getEventEndDate,
   getTodayKey,
+  TASK_STATUS_LABELS,
 } from '../calendar/calendarUtils'
 import {
   formatRelativeDate,
@@ -18,14 +20,15 @@ export default function HomePage() {
   const { activeDocuments } = useDocumentStore()
   const { openNewPage, calendar } = useOutletContext()
   const [studyName, setStudyName] = useState(
-    () => window.localStorage.getItem('folio-study-name') || '나의 스터디'
+    () => window.localStorage.getItem('folio-study-name') || '나의 문서'
   )
 
   const today = getTodayKey()
 
-  // 문서 일정과 보드 기간을 함께 확인
+  // 오늘 일정은 직접 등록한 문서 일정만 보여줌. 보드 작업 기간은 아래 '진행할 작업'에서 보여서 중복을 피함
   const todayEntries = entriesOnDate(
-    collectCalendarEntries(activeDocuments),
+    collectEvents(activeDocuments.filter((document) => !document.isDeleted))
+      .map((event) => ({ ...event, endDate: getEventEndDate(event) })),
     today
   )
 
@@ -109,9 +112,7 @@ export default function HomePage() {
                   onClick={() => calendar.open(today)}
                 >
                   <span className="home-schedule-time">
-                    {entry.kind === 'period'
-                      ? '진행 기간'
-                      : entry.time || '종일'}
+                    {entry.time || '종일'}
                   </span>
 
                   <span className="home-row-main">
@@ -138,7 +139,7 @@ export default function HomePage() {
 
       <section className="home-section" aria-labelledby="home-tasks-title">
         <div className="home-section-heading">
-          <h2 id="home-tasks-title">진행 중인 작업 <span>{ongoingTasks.length}</span></h2>
+          <h2 id="home-tasks-title">진행할 작업 <span>{ongoingTasks.length}</span></h2>
           <Link className="home-section-action" to="/tasks">작업 보드 보기 →</Link>
         </div>
         {ongoingTasks.length === 0 ? (
@@ -150,6 +151,7 @@ export default function HomePage() {
                 <Link className="home-document-row" to={`/documents/${task.id}`}>
                   <strong className="home-document-title">{getDocumentTitle(task)}</strong>
                   <span className="home-task-date">{task.startDate ? `${task.startDate}${task.endDate && task.endDate !== task.startDate ? ` ~ ${task.endDate}` : ''}` : '기간 미정'}</span>
+                  <span className={`home-task-status status-${task.taskStatus ?? 'todo'}`}>{TASK_STATUS_LABELS[task.taskStatus ?? 'todo']}</span>
                 </Link>
               </li>
             ))}

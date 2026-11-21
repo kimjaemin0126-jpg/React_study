@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { CalendarDays,Lightbulb,ChevronDown, ChevronRight, ChevronsLeft, FileText, Home, Plus, Search, Star, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { CalendarDays,Lightbulb,ChevronDown, ChevronRight, ChevronsLeft, FileText, Home, Plus, Search, Star, Trash2, PanelLeftClose, PanelLeftOpen, Users } from 'lucide-react'
 import { useDocumentStore } from '../hooks/useDocumentStore'
 import { getDocumentTitle } from '../utils/documentUtils'
 
@@ -16,6 +16,8 @@ function TreeItem({ document, documents, onNewChild }) {
         </button>
         <button type="button" className="tree-link" onClick={() => navigate(`/documents/${document.id}`)}>
           <FileText size={15} /><span>{getDocumentTitle(document)}</span>
+          {/* 그룹 스터디 문서 표시 */}
+          {document.workspaceId && <Users size={13} className="tree-study-icon" aria-label="그룹 스터디 문서" title="그룹 스터디 문서" />}
         </button>
         {document.studyRole !== 'VIEWER' && <button type="button" className="tree-add" title="하위 페이지 추가" aria-label={`${getDocumentTitle(document)} 하위 페이지 추가`} onClick={() => onNewChild(document.id)}><Plus size={14} /></button>}
       </div>

@@ -254,3 +254,23 @@
   background: var(--hover);
   outline: none;
 }
+
+/* 일정 타임라인 막대와 같은 색: 시작 전(회색), 진행 중(파랑), 완료(초록) */
+.home-task-status {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-radius: 5px;
+    color: var(--text-strong);
+    background: var(--border);
+    font-size: 11px;
+}
+
+.home-task-status.status-doing {
+    color: #125e9b;
+    background: #cce5ff;
+}
+
+.home-task-status.status-done {
+    color: #286348;
+    background: #d4e9df;
+}

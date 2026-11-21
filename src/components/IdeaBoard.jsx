@@ -163,9 +163,6 @@ return (
                         />
                     </label>
 
-                    <span className="idea-board-author">
-                        작성자 · {idea.author || '정보 없음'}
-                    </span>
                 </div>
 
                 <h3>{idea.title || '제목 없음'}</h3>

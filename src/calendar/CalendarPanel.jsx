@@ -5,7 +5,7 @@ import EventForm from './EventForm'
 import { calendarMarkers, collectCalendarEntries, createEvent, entriesOnDate, formatDateLabel, formatRangeLabel, getEventEndDate, sortEvents } from './calendarUtils'
 
 // 문서 안에서 여는 캘린더: 현재 문서의 일정을 보고 추가·수정·삭제한다.
-export default function CalendarPanel({ documentTitle, events, onChange, calendar, taskPeriod = null, readOnly = false }) {
+export default function CalendarPanel({ documentTitle, events, onChange, calendar, taskPeriod = null, taskStatus = 'todo', onTaskStatusChange, readOnly = false }) {
   const [editingId, setEditingId] = useState(null)
   const { selectedDate, visibleMonth, selectDate } = calendar
   // 기간 일정은 시작일~종료일 사이의 모든 날짜에 보인다.
@@ -47,7 +47,6 @@ export default function CalendarPanel({ documentTitle, events, onChange, calenda
           <ul className="calendar-event-list">
             {dayEvents.map((event) => (
               <li key={event.id} className={event.id === editingId ? 'is-editing' : ''}>
-                <span className="calendar-event-time">{event.time || '종일'}</span>
                 <span className="calendar-event-title">
                   {event.title}
                   {getEventEndDate(event) !== event.date && <small className="calendar-event-range">{formatRangeLabel(event.date, getEventEndDate(event))}</small>}
@@ -59,8 +58,8 @@ export default function CalendarPanel({ documentTitle, events, onChange, calenda
           </ul>
         )}
         {editingEvent
-          ? <EventForm key={editingEvent.id} event={editingEvent} date={selectedDate} onSubmit={saveEvent} onCancel={() => setEditingId(null)} />
-          : (readOnly ? <p className="calendar-empty">보기 권한에서는 일정을 추가할 수 없어요.</p> : <EventForm key={`new-${selectedDate}`} date={selectedDate} onSubmit={addEvent} />)}
+          ? <EventForm key={editingEvent.id} event={editingEvent} date={selectedDate} taskStatus={taskStatus} onTaskStatusChange={onTaskStatusChange} onSubmit={saveEvent} onCancel={() => setEditingId(null)} />
+          : (readOnly ? <p className="calendar-empty">보기 권한에서는 일정을 추가할 수 없어요.</p> : <EventForm key={`new-${selectedDate}`} date={selectedDate} taskStatus={taskStatus} onTaskStatusChange={onTaskStatusChange} onSubmit={addEvent} />)}
       </section>
     </CalendarShell>
   )

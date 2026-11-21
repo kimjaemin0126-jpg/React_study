@@ -16,6 +16,9 @@ export default function CalendarContent({ documentId, documents, updateDocument,
       documentTitle={getDocumentTitle(current)}
       events={current.events ?? []}
       taskPeriod={current.isTask ? current : null}
+      taskStatus={current.taskStatus ?? 'todo'}
+      // 상태를 고르면 작업 보드에 바로 반영되도록 보드 문서로 표시
+      onTaskStatusChange={(next) => updateDocument(current.id, { taskStatus: next, isTask: true })}
       onChange={(events) => updateDocument(current.id, { events })}
       readOnly={current.studyRole === 'VIEWER'}
       calendar={calendar}

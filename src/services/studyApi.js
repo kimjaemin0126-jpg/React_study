@@ -24,10 +24,6 @@ export const studyApi = {
   getStudy: (workspaceId) => request('GET', `/workspaces/${workspaceId}`),
   getDocument: (workspaceId) => request('GET', `/workspaces/${workspaceId}/document`),
   saveDocument: (workspaceId, payload) => request('PUT', `/workspaces/${workspaceId}/document`, payload),
-  getIdeas: (workspaceId) => request('GET', `/workspaces/${workspaceId}/ideas`),
-  createIdea: (workspaceId, values) => request('POST', `/workspaces/${workspaceId}/ideas`, values),
-  updateIdea: (workspaceId, ideaId, values) => request('PATCH', `/workspaces/${workspaceId}/ideas/${ideaId}`, values),
-  deleteIdea: (workspaceId, ideaId) => request('DELETE', `/workspaces/${workspaceId}/ideas/${ideaId}`),
 
   getMembers: (workspaceId) => request('GET', `/workspaces/${workspaceId}/members`),
   changeRole: (workspaceId, memberId, role) => request('PATCH', `/workspaces/${workspaceId}/members/${memberId}`, { role }),
@@ -38,11 +34,8 @@ export const studyApi = {
   revokeInvite: (workspaceId, inviteId) => request('DELETE', `/workspaces/${workspaceId}/invites/${inviteId}`),
 
   closeStudy: (workspaceId) => request('POST', `/workspaces/${workspaceId}/close`),
-  reopenStudy: (workspaceId) => request('POST', `/workspaces/${workspaceId}/reopen`),
   leaveStudy: (workspaceId) => request('POST', `/workspaces/${workspaceId}/leave`),
 
-  getIdeaSections: (workspaceId) => request('GET', `/workspaces/${workspaceId}/ideas/sections`),
-  saveIdeaSections: (workspaceId, sections) => request('PUT', `/workspaces/${workspaceId}/ideas/sections`, { sections }),
 
   acceptInvite: (code, nickname) => request('POST', `/invites/${code}/accept`, { nickname })
 }

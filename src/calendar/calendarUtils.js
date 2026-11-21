@@ -72,11 +72,19 @@ export function formatRangeLabel(start, end) {
 }
 
 // 여러 문서의 일정을 어느 문서 소속인지와 함께 한 목록으로 모은다.
+export const TASK_STATUS_LABELS = { todo: '시작 전', doing: '진행 중', done: '완료' }
+
+// 보드 문서가 아니면 상태를 보여주지 않으려고 null
+function taskStatusOf(document) {
+  return document.isTask ? (document.taskStatus ?? 'todo') : null
+}
+
 export function collectEvents(documents) {
   return documents.flatMap((document) => (document.events ?? []).map((event) => ({
     ...event,
     documentId: document.id,
-    documentTitle: document.title.trim() || '제목 없음'
+    documentTitle: document.title.trim() || '제목 없음',
+    taskStatus: taskStatusOf(document),
   })))
 }
 
@@ -95,6 +103,7 @@ export function collectCalendarEntries(documents) {
     documentId: document.id,
     documentTitle: document.title.trim() || '제목 없음',
     title: document.title.trim() || '제목 없음',
+    taskStatus: taskStatusOf(document),
     date: document.startDate,
     endDate: document.endDate && document.endDate >= document.startDate ? document.endDate : document.startDate,
     time: '',
